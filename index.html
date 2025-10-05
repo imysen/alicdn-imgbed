@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>闲鱼图床</title>
+    <style>
+        :root { --border:#e5e5e5; --text:#222; --muted:#666; --bg:#f6f6f6; --primary:#0d6efd; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
+        .wrap { max-width: 720px; margin: 40px auto; padding: 0 16px; }
+        .card { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+        h1 { font-size: 20px; margin: 0 0 8px; font-weight: 600; }
+        p.note { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+        .row { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        label { font-size: 14px; color: var(--muted); }
+        input[type="file"], select, button { width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+        select { background-color: #fff; }
+        .btn { background: var(--primary); color: #fff; border-color: var(--primary); cursor: pointer; }
+        .btn:disabled { opacity: .6; cursor: not-allowed; }
+        .bar { height: 6px; background: #f0f0f0; border-radius: 4px; overflow: hidden; display:none; }
+        .bar>i { display:block; height:100%; width:0%; background: var(--primary); transition: width .2s; }
+        .status { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+        .files-tip { font-size: 13px; color: var(--muted); }
+        .top { display:flex; align-items:center; justify-content: space-between; margin-bottom:12px; }
+        .top a { color: var(--primary); text-decoration: none; font-size: 13px; }
+        .results { margin-top: 16px; }
+        .item { border:1px solid var(--border); border-radius:6px; padding:10px; display:flex; gap:10px; align-items: center; margin-top:10px; }
+        .thumb { width:56px; height:56px; object-fit: cover; border:1px solid var(--border); border-radius:4px; }
+        .meta { flex:1; min-width: 0; }
+        .meta .name { font-size: 14px; color:#000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .meta .url { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; color:#000; word-break: break-all; margin-top:4px; }
+        .copy { padding:6px 10px; font-size:12px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer; }
+        .err { color:#c0392b; font-size:13px; }
+        .muted { color: var(--muted); font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="card">
+                        <div class="top">
+                                <h1>闲鱼图床</h1>
+                                <div style="display:flex; gap:8px; align-items:center;">
+                                    <button id="btnSetCookie" class="copy" title="更新 cookie2（每周过期可在此更换）">更换 Cookie</button>
+                                    <a href="gallery.html" class="copy" style="background: var(--primary); color:#fff; border-color: var(--primary); text-decoration:none; white-space: nowrap;">查看画廊</a>
+                                </div>
+                        </div>
+            <p class="note">选择图片，设置分类与格式，点击上传即可获取外链。</p>
+
+            <div class="row">
+                <div>
+                    <label for="files">图片文件（可多选）</label>
+                    <input id="files" name="files[]" type="file" accept="image/*" multiple />
+                    <div id="fileTip" class="files-tip">未选择文件</div>
+                </div>
+
+                <div>
+                    <label for="category">分类</label>
+                    <select id="category">
+                        <option value="未分类">未分类</option>
+                        <option value="头像">头像</option>
+                        <option value="二次元壁纸">二次元壁纸</option>
+                        <option value="截图">截图</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="format">格式</label>
+                    <select id="format">
+                        <option value="original">原图</option>
+                        <option value="webp">WebP</option>
+                        <option value="avif">AVIF</option>
+                    </select>
+                </div>
+
+                <div>
+                    <button id="btnUpload" class="btn">上传</button>
+                    <div class="bar" id="bar"><i id="barInner"></i></div>
+                    <div class="status" id="status"></div>
+                </div>
+            </div>
+
+            <div class="results" id="results"></div>
+            <p class="muted">提示：支持 JPG/PNG/GIF/WebP，单文件不超过 50MB。</p>
+        </div>
+    </div>
+
+    <script>
+        const el = (id) => document.getElementById(id);
+        const filesInput = el('files');
+        const categorySel = el('category');
+        const formatSel = el('format');
+        const btn = el('btnUpload');
+        const bar = el('bar');
+        const barInner = el('barInner');
+        const status = el('status');
+        const results = el('results');
+        const fileTip = el('fileTip');
+    const btnSetCookie = el('btnSetCookie');
+
+        filesInput.addEventListener('change', () => {
+            const count = filesInput.files?.length || 0;
+            fileTip.textContent = count ? `已选择 ${count} 个文件` : '未选择文件';
+        });
+
+        btnSetCookie.addEventListener('click', async () => {
+            const v = prompt('输入新的 cookie2 值：');
+            if (v == null) return; // 取消
+            const cookie2 = (v || '').trim();
+            if (!cookie2) { alert('cookie2 不能为空'); return; }
+            try {
+                const res = await fetch('set_cookie.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cookie2 })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || '更新失败');
+                alert('Cookie 已更新');
+            } catch (e) {
+                alert(e.message || '更新失败');
+            }
+        });
+
+        btn.addEventListener('click', async () => {
+            const files = filesInput.files;
+            if (!files || !files.length) {
+                alert('请先选择图片');
+                return;
+            }
+
+            // UI 状态
+            setBusy(true);
+            resetProgress();
+            status.textContent = '上传中…';
+            results.innerHTML = '';
+
+            try {
+                const fd = new FormData();
+                for (const f of files) fd.append('files[]', f);
+                fd.append('category', categorySel.value || '未分类');
+                fd.append('format', formatSel.value || 'original');
+
+                // 采用一次性上传，进度用简单阶段百分比（开始→完成）
+                showProgress(30);
+                const res = await fetch('upload.php', { method: 'POST', body: fd });
+                showProgress(70);
+                const data = await res.json().catch(() => null);
+                if (!data) throw new Error('响应解析失败');
+
+                renderResponse(data);
+                status.textContent = '完成';
+                showProgress(100);
+            } catch (e) {
+                status.textContent = '上传失败';
+                const msg = (e && e.message) ? e.message : '未知错误';
+                results.innerHTML = `<div class="item"><div class="meta err">${escapeHtml(msg)}</div></div>`;
+            } finally {
+                setBusy(false);
+                setTimeout(resetProgress, 500);
+            }
+        });
+
+        function renderResponse(data) {
+            // 单文件
+            if (typeof data.success === 'boolean' && (data.data || !data.success)) {
+                if (data.success) {
+                    renderOne({ success:true, data: data.data });
+                } else {
+                    renderOne({ success:false, message: data.message || '上传失败' });
+                }
+                return;
+            }
+            // 多文件
+            if (Array.isArray(data.results)) {
+                for (const r of data.results) renderOne(r);
+                return;
+            }
+            // 未知格式
+            results.innerHTML = `<div class="item"><div class="meta err">返回数据格式不符合预期</div></div>`;
+        }
+
+        function renderOne(r){
+            if (r.success) {
+                const d = r.data;
+                const url = d && d.url ? d.url : '';
+                const name = d && d.fileName ? d.fileName : '图片';
+                const size = d && d.size ? d.size : '';
+                const node = document.createElement('div');
+                node.className = 'item';
+                node.innerHTML = `
+                    <img class="thumb" src="${escapeAttr(url)}" alt="thumb" onerror="this.style.display='none'" />
+                    <div class="meta">
+                        <div class="name">${escapeHtml(name)} ${size ? `· ${escapeHtml(size)}` : ''}</div>
+                        <div class="url">${escapeHtml(url)}</div>
+                    </div>
+                    <button class="copy" data-url="${escapeAttr(url)}">复制</button>
+                `;
+                node.querySelector('.copy').addEventListener('click', () => copy(node.querySelector('.copy').dataset.url));
+                results.appendChild(node);
+            } else {
+                const node = document.createElement('div');
+                node.className = 'item';
+                node.innerHTML = `<div class="meta err">${escapeHtml(r.message || '上传失败')}</div>`;
+                results.appendChild(node);
+            }
+        }
+
+        function copy(text) {
+            if (!text) return;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(()=>{ btnFlash('已复制'); }).catch(()=>fallbackCopy(text));
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text){
+            const ta = document.createElement('textarea');
+            ta.value = text; document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); btnFlash('已复制'); } catch {}
+            document.body.removeChild(ta);
+        }
+
+        function btnFlash(msg){
+            const old = btn.textContent; btn.textContent = msg; btn.disabled = true;
+            setTimeout(()=>{ btn.textContent = old; btn.disabled = false; }, 600);
+        }
+
+        function setBusy(b){ btn.disabled = b; filesInput.disabled = b; categorySel.disabled = b; formatSel.disabled = b; }
+        function showProgress(p){ bar.style.display = 'block'; barInner.style.width = Math.max(0, Math.min(100, p)) + '%'; }
+        function resetProgress(){ bar.style.display = 'none'; barInner.style.width = '0%'; }
+
+        function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' }[c])); }
+        function escapeAttr(s){ return String(s ?? '').replace(/["']/g, c=>({ '"':'&quot;','\'':'&#39;' }[c])); }
+    </script>
+</body>
+</html>

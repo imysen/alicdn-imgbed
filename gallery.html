@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>图片画廊 - 闲鱼图床</title>
+  <style>
+    :root { --border:#e5e5e5; --text:#222; --muted:#666; --bg:#f6f6f6; --primary:#0d6efd; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
+    .wrap { max-width: 960px; margin: 40px auto; padding: 0 16px; }
+    .card { background:#fff; border:1px solid var(--border); border-radius:8px; padding:16px; }
+    .top { display:flex; align-items:center; justify-content: space-between; margin-bottom:12px; }
+    h1 { font-size:20px; margin:0; font-weight:600; }
+    .top a { color: var(--primary); text-decoration: none; font-size: 13px; }
+    .muted { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+  .controls { display:grid; grid-template-columns: 1fr 220px auto auto auto; gap: 8px; align-items: center; }
+    .controls input[type="text"], .controls select, .controls button { padding: 8px 10px; font-size:14px; border:1px solid var(--border); border-radius:6px; background:#fff; }
+    .controls button { cursor: pointer; }
+    .controls .primary { background: var(--primary); color:#fff; border-color: var(--primary); }
+    .stats { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+    .grid { margin-top: 12px; display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+    .item { border:1px solid var(--border); border-radius:6px; overflow:hidden; background:#fff; display:flex; flex-direction: column; }
+    .item img { display:block; width:100%; height:140px; object-fit: cover; background:#fafafa; }
+    .info { padding:8px; }
+    .name { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .meta { margin-top:4px; font-size: 12px; color: var(--muted); display:flex; justify-content: space-between; }
+  .acts { display:flex; gap:6px; padding:8px; border-top:1px solid var(--border); flex-wrap: wrap; }
+  .acts button, .acts a { padding:6px 8px; font-size:12px; border:1px solid var(--border); background:#fff; color:#000; border-radius:6px; cursor:pointer; text-decoration:none; }
+  .acts .danger { border-color:#e74c3c; color:#e74c3c; }
+    .empty, .error, .loading { padding: 24px; text-align: center; color: var(--muted); }
+  .cat-panel { margin-top:12px; padding:12px; border:1px dashed var(--border); border-radius:6px; background:#fafafa; }
+  .cat-row { display:grid; grid-template-columns: 1fr 1fr auto auto; gap:8px; margin-top:8px; }
+  .cat-row input, .cat-row select, .cat-row button { padding:8px 10px; font-size:13px; border:1px solid var(--border); border-radius:6px; background:#fff; }
+  .cat-row button { cursor:pointer; }
+    @media (max-width: 720px) {
+      .controls { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <h1>图片画廊</h1>
+        <a href="index.html">返回上传</a>
+      </div>
+      <p class="muted">查看与管理已上传的图片，可按分类与名称筛选。</p>
+
+      <div class="controls">
+        <input id="kw" type="text" placeholder="搜索文件名" />
+        <select id="selCategory"></select>
+        <button id="btnRefresh">刷新</button>
+        <button id="btnExport">导出数据</button>
+        <button id="btnOpenJson" class="primary" title="打开原始数据">打开JSON</button>
+      </div>
+
+      <div class="cat-panel" id="catPanel">
+        <div class="muted">分类管理：可以重命名分类或删除分类（删除分类仅把该分类下图片移至“未分类”）。</div>
+        <div class="cat-row">
+          <select id="catFrom"></select>
+          <input id="catTo" type="text" placeholder="新分类名（用于重命名）" />
+          <button id="btnRenameCat">重命名</button>
+          <button id="btnDeleteCat" class="danger">删除分类</button>
+        </div>
+      </div>
+
+      <div class="stats" id="stats">统计：总数 0 · 分类 0</div>
+
+      <div id="grid" class="grid">
+        <div class="loading">正在加载…</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const el = (id)=>document.getElementById(id);
+    const grid = el('grid');
+    const kw = el('kw');
+    const selCategory = el('selCategory');
+  const stats = el('stats');
+    const btnRefresh = el('btnRefresh');
+    const btnExport = el('btnExport');
+    const btnOpenJson = el('btnOpenJson');
+  const catFrom = el('catFrom');
+  const catTo = el('catTo');
+  const btnRenameCat = el('btnRenameCat');
+  const btnDeleteCat = el('btnDeleteCat');
+
+    let all = [];
+    let filtered = [];
+
+    window.addEventListener('load', () => {
+      load();
+      kw.addEventListener('input', applyFilter);
+      selCategory.addEventListener('change', applyFilter);
+      btnRefresh.addEventListener('click', () => { grid.innerHTML = '<div class="loading">正在刷新…</div>'; load(); });
+      btnExport.addEventListener('click', exportData);
+      btnOpenJson.addEventListener('click', ()=>{ window.open('gallery.json', '_blank'); });
+      btnRenameCat.addEventListener('click', onRenameCategory);
+      btnDeleteCat.addEventListener('click', onDeleteCategory);
+    });
+
+    async function load(){
+      try {
+        const res = await fetch('gallery.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error('加载失败');
+        const data = await res.json();
+        if (!Array.isArray(data)) throw new Error('数据格式错误');
+        all = data;
+        buildCategories(all);
+        applyFilter();
+      } catch (e) {
+        grid.innerHTML = `<div class="error">${escapeHtml(e.message || '加载出错')}</div>`;
+        stats.textContent = '统计：总数 0 · 分类 0';
+      }
+    }
+
+    function buildCategories(list){
+      const set = new Set(['全部']);
+      list.forEach(x => x.category && set.add(x.category));
+      selCategory.innerHTML = '';
+      for (const c of set){
+        const opt = document.createElement('option');
+        opt.value = c; opt.textContent = c; selCategory.appendChild(opt);
+      }
+      // 分类管理下拉（不含“全部”）
+      const cats = Array.from(set).filter(x => x !== '全部');
+      catFrom.innerHTML = '';
+      for (const c of cats){
+        const opt = document.createElement('option');
+        opt.value = c; opt.textContent = c; catFrom.appendChild(opt);
+      }
+    }
+
+    function applyFilter(){
+      const q = (kw.value || '').toLowerCase();
+      const cat = selCategory.value || '全部';
+      filtered = all.filter(x => {
+        const okCat = (cat === '全部') ? true : (x.category === cat);
+        const okKw = !q || String(x.fileName || '').toLowerCase().includes(q);
+        return okCat && okKw;
+      });
+      updateStats();
+      render();
+    }
+
+    function updateStats(){
+      const cats = new Set(all.map(x=>x.category).filter(Boolean));
+      stats.textContent = `统计：总数 ${all.length} · 分类 ${cats.size}`;
+    }
+
+    function render(){
+      if (!filtered.length){
+        grid.innerHTML = '<div class="empty">暂无图片</div>';
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      grid.innerHTML = '';
+      for (const item of filtered){
+        frag.appendChild(renderItem(item));
+      }
+      grid.appendChild(frag);
+    }
+
+    function renderItem(it){
+      const d = document.createElement('div');
+      d.className = 'item';
+      const url = String(it.url || '');
+      const name = String(it.fileName || '图片');
+      d.innerHTML = `
+        <img src="${escapeAttr(url)}" alt="" loading="lazy" onerror="this.style.display='none'" />
+        <div class="info">
+          <div class="name" title="${escapeAttr(name)}">${escapeHtml(name)}</div>
+          <div class="meta"><span>${escapeHtml(it.category || '未分类')}</span><span>${escapeHtml(it.uploadTime || '')}</span></div>
+        </div>
+        <div class="acts">
+          <button data-url="${escapeAttr(url)}">复制</button>
+          <a href="${escapeAttr(url)}" target="_blank" rel="noopener">打开</a>
+          <button data-dl="${escapeAttr(url)}" data-name="${escapeAttr(name)}">下载</button>
+          <button data-del="${escapeAttr(it.id || '')}" class="danger">删除</button>
+        </div>
+      `;
+      const copyBtn = d.querySelector('button[data-url]');
+      const dlBtn = d.querySelector('button[data-dl]');
+      const delBtn = d.querySelector('button[data-del]');
+      copyBtn.addEventListener('click', ()=>copy(copyBtn.dataset.url));
+      dlBtn.addEventListener('click', ()=>download(dlBtn.dataset.dl, dlBtn.dataset.name));
+      delBtn.addEventListener('click', ()=>onDeleteItem(delBtn.dataset.del));
+      return d;
+    }
+
+    async function onDeleteItem(id){
+      if (!id) return;
+      if (!confirm('确认从画廊中删除该图片记录吗？此操作不会删除远端图片。')) return;
+      try {
+        const res = await fetch('manage.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete', id })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || '删除失败');
+        // 本地数据同步并刷新
+        all = all.filter(x => x.id !== id);
+        applyFilter();
+      } catch (e) {
+        alert(e.message || '删除失败');
+      }
+    }
+
+    async function onRenameCategory(){
+      const from = catFrom.value || '';
+      const to = (catTo.value || '').trim();
+      if (!from || !to) { alert('请选择原分类并填写新分类名'); return; }
+      try {
+        const res = await fetch('manage.php', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'renameCategory', from, to })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || '重命名失败');
+        // 刷新本地数据
+        all.forEach(x => { if (x.category === from) x.category = to; });
+        buildCategories(all);
+        applyFilter();
+        catTo.value = '';
+        alert('已重命名');
+      } catch (e) { alert(e.message || '重命名失败'); }
+    }
+
+    async function onDeleteCategory(){
+      const name = catFrom.value || '';
+      if (!name) { alert('请选择要删除的分类'); return; }
+      if (!confirm(`确认删除分类 “${name}” 吗？该分类下图片将移动到“未分类”。`)) return;
+      try {
+        const res = await fetch('manage.php', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'deleteCategory', name, replacement: '未分类' })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || '删除分类失败');
+        // 刷新本地数据
+        all.forEach(x => { if (x.category === name) x.category = '未分类'; });
+        buildCategories(all);
+        applyFilter();
+        alert('已删除分类');
+      } catch (e) { alert(e.message || '删除分类失败'); }
+    }
+
+    function copy(text){
+      if (!text) return;
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(()=>{}).catch(()=>fallbackCopy(text));
+      } else { fallbackCopy(text); }
+    }
+    function fallbackCopy(text){
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch {}
+      document.body.removeChild(ta);
+    }
+    function download(url, name){
+      if (!url) return;
+      const a = document.createElement('a');
+      a.href = url; a.download = name || 'image'; a.target = '_blank';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    function exportData(){
+      const dataStr = JSON.stringify(all, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'gallery_export_' + new Date().toISOString().slice(0,10) + '.json';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' }[c])); }
+    function escapeAttr(s){ return String(s ?? '').replace(/["']/g, c=>({ '"':'&quot;','\'':'&#39;' }[c])); }
+  </script>
+</body>
+</html>
