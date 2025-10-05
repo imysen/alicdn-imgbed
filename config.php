@@ -9,7 +9,8 @@
 
 // 闲鱼API配置
 define('GOOFISH_UPLOAD_URL', 'https://stream-upload.goofish.com/api/upload.api');
-define('COOKIE2_VALUE', ''); // 请替换为你的cookie2值 通过https://author.goofish.com/#/获取
+define('COOKIE2_VALUE', '1b35885f071a40aeeb5295422a2a0e6a');
+// 请替换为你的cookie2值 通过https://author.goofish.com/#/获取
 
 // 上传限制配置
 define('MAX_FILE_SIZE', 50 * 1024 * 1024); // 最大文件大小 50MB
@@ -20,6 +21,18 @@ define('ALLOWED_TYPES', [
     'image/webp',
     'image/jpg'
 ]);
+
+// HTTP 请求配置（可根据网络情况调整）
+// 总超时（秒）：服务器偶发慢时可适当增大到 60~120
+define('HTTP_TIMEOUT', 45);
+// 连接超时（秒）：TCP 连接阶段超时，过小会导致弱网下频繁重试
+define('HTTP_CONNECT_TIMEOUT', 8);
+// 重试次数：遇到超时/连接失败/5xx 时的额外重试次数（总尝试=1+次数）
+define('HTTP_RETRY_TIMES', 2);
+// 重试退避基准（毫秒）：指数退避的初始等待时间
+define('HTTP_RETRY_BACKOFF_MS', 600);
+// 仅使用IPv4解析（部分环境IPv6路由不稳定时建议开启）
+define('HTTP_IPRESOLVE_V4', true);
 
 // 安全配置
 define('ENABLE_RATE_LIMIT', true); // 是否启用频率限制

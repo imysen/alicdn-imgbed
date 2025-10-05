@@ -1,0 +1,26 @@
+[2025-10-06 03:22:43] 文件上传开始: img_20251006032243_b64a49.png, 大小: 597.17 KB, IP: 127.0.0.1
+[2025-10-06 03:22:43] 文件上传成功: img_20251006032243_b64a49, 结果: {"success":true,"message":"上传成功","data":{"url":"https:\/\/img.alicdn.com\/imgextra\/i2\/O1CN01GN9Wjq2DSyp7pcjOc_!!2215249208609-2-fleamarket.png","fileName":"img_20251006032243_b64a49","size":"597.17 KB","pix":"1919x1079","fileId":"1860908580658624906","quality":100}}
+[2025-10-06 03:28:18] 文件上传开始: img_20251006032818_2bf4f8.png, 大小: 123.07 KB, IP: 127.0.0.1
+[2025-10-06 03:28:18] 文件上传成功: img_20251006032818_2bf4f8, 结果: {"success":true,"message":"上传成功","data":{"url":"https:\/\/img.alicdn.com\/imgextra\/i1\/O1CN01fM0EA22DSypDSio05_!!2215249208609-2-fleamarket.png","fileName":"img_20251006032818_2bf4f8","size":"123.07 KB","pix":"406x323","fileId":"1860908585817013837","quality":100}}
+[2025-10-06 03:30:32] 文件上传开始: img_20251006033032_df7bcd.png, 大小: 194.84 KB, IP: 127.0.0.1
+[2025-10-06 03:31:02] 文件上传失败: img_20251006033032_df7bcd.png, 错误: cURL错误: Connection timed out after 30001 milliseconds
+[2025-10-06 03:31:27] 文件上传开始: img_20251006033127_811046.png, 大小: 272.75 KB, IP: 127.0.0.1
+[2025-10-06 03:31:27] 文件上传成功: img_20251006033127_811046, 结果: {"success":true,"message":"上传成功","data":{"url":"https:\/\/img.alicdn.com\/imgextra\/i3\/O1CN01sRQPfr2DSypEQYDgZ_!!2215249208609-2-fleamarket.png","fileName":"img_20251006033127_811046","size":"272.75 KB","pix":"1079x1919","fileId":"1860908586701071123","quality":100}}
+[2025-10-06 03:58:56] 文件上传开始: img_20251006035856_efe5c6.png, 大小: 788.75 KB, IP: 127.0.0.1
+[2025-10-06 03:59:26] 文件上传失败: img_20251006035856_efe5c6.png, 错误: cURL错误: Connection timed out after 30000 milliseconds
+[2025-10-06 03:59:26] 文件上传开始: img_20251006035926_a6627e.png, 大小: 31.42 KB, IP: 127.0.0.1
+[2025-10-06 03:59:27] 文件上传成功: img_20251006035926_a6627e, 结果: {"success":true,"message":"上传成功","data":{"url":"https:\/\/img.alicdn.com\/imgextra\/i1\/O1CN01sYOjBH2DSypDvL3wG_!!2215249208609-2-fleamarket.png","fileName":"img_20251006035926_a6627e","size":"31.42 KB","pix":"1024x1024","fileId":"1860908586239868976","quality":100}}
+[2025-10-06 04:04:27] 文件上传开始: img_20251006040427_a3c016.png, 大小: 1.18 MB, IP: 127.0.0.1
+[2025-10-06 04:04:27] 文件上传成功: img_20251006040427_a3c016, 结果: {"success":true,"message":"上传成功","data":{"url":"https:\/\/img.alicdn.com\/imgextra\/i2\/O1CN01LmvMtm2DSypDTO5lN_!!2215249208609-2-fleamarket.png","fileName":"img_20251006040427_a3c016","size":"1.18 MB","pix":"1024x1024","fileId":"1860908585826853565","quality":100}}
+[2025-10-06 04:04:41] 文件上传开始: img_20251006040441_197c5a.gif, 大小: 1.48 MB, IP: 127.0.0.1
+[2025-10-06 04:04:51] retry upload attempt=1/3, http=0, errno=28, delayMs=638
+[2025-10-06 04:05:02] retry upload attempt=2/3, http=0, errno=28, delayMs=1387
+[2025-10-06 04:05:13] 文件上传失败: img_20251006040441_197c5a.gif, 错误: cURL错误: Connection timed out after 10001 milliseconds
+[2025-10-06 04:05:13] 文件上传开始: img_20251006040513_587d3e.gif, 大小: 235.83 KB, IP: 127.0.0.1
+[2025-10-06 04:05:13] 文件上传成功: img_20251006040513_587d3e, 结果: {"success":true,"message":"上传成功","data":{"url":"https:\/\/img.alicdn.com\/imgextra\/i2\/O1CN01GGSZDM2DSypEH0igo_!!2215249208609-1-fleamarket.gif","fileName":"img_20251006040513_587d3e","size":"235.83 KB","pix":"716x718","fileId":"1860908586560100126","quality":100}}
+[2025-10-06 04:09:47] 文件上传开始: img_20251006040947_be757a.png, 大小: 1.25 MB, IP: 127.0.0.1
+[2025-10-06 04:09:48] 文件上传成功: img_20251006040947_be757a, 结果: {"success":true,"message":"上传成功","data":{"url":"https:\/\/img.alicdn.com\/imgextra\/i2\/O1CN01TbGwgM2DSypDXaw2z_!!2215249208609-2-fleamarket.png","fileName":"img_20251006040947_be757a","size":"1.25 MB","pix":"1024x1024","fileId":"1860908585889019825","quality":100}}
+[2025-10-06 04:11:44] 文件上传开始: img_20251006041144_e7f055.png, 大小: 585.01 KB, IP: 127.0.0.1
+[2025-10-06 04:11:45] 文件上传成功: img_20251006041144_e7f055, 结果: {"success":true,"message":"上传成功","data":{"url":"https:\/\/img.alicdn.com\/imgextra\/i3\/O1CN01fYUK1A2DSypDTXtPg_!!2215249208609-2-fleamarket.png","fileName":"img_20251006041144_e7f055","size":"585.01 KB","pix":"1000x1000","fileId":"1860908585829189372","quality":100}}
+[2025-10-06 04:23:37] 文件上传开始: img_20251006042337_4ddc67.png, 大小: 4.59 KB, IP: 127.0.0.1
+[2025-10-06 04:23:38] 文件上传成功: img_20251006042337_4ddc67, 结果: {"success":true,"message":"上传成功","data":{"url":"https:\/\/img.alicdn.com\/imgextra\/i1\/O1CN01el2YRs2DSypEFk0rX_!!2215249208609-2-fleamarket.png","fileName":"img_20251006042337_4ddc67","size":"4.59 KB","pix":"240x240","fileId":"1860908586541342071","quality":100}}

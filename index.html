@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>闲鱼图床</title>
+    <title>AliCDN图床</title>
     <style>
         :root { --border:#e5e5e5; --text:#222; --muted:#666; --bg:#f6f6f6; --primary:#0d6efd; }
         * { box-sizing: border-box; }
-        body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.35; }
         .wrap { max-width: 720px; margin: 40px auto; padding: 0 16px; }
         .card { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
         h1 { font-size: 20px; margin: 0 0 8px; font-weight: 600; }
         p.note { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
         .row { display: grid; grid-template-columns: 1fr; gap: 12px; }
         label { font-size: 14px; color: var(--muted); }
-        input[type="file"], select, button { width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+    /* 仅让主要操作按钮(.btn)和表单控件占满宽度，普通按钮（如复制）保持自适应 */
+    input[type="file"], input[type="text"], select, .btn { width: 100%; padding: 14px 16px; font-size: 14px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
         select { background-color: #fff; }
         .btn { background: var(--primary); color: #fff; border-color: var(--primary); cursor: pointer; }
         .btn:disabled { opacity: .6; cursor: not-allowed; }
@@ -25,21 +26,29 @@
         .top { display:flex; align-items:center; justify-content: space-between; margin-bottom:12px; }
         .top a { color: var(--primary); text-decoration: none; font-size: 13px; }
         .results { margin-top: 16px; }
-        .item { border:1px solid var(--border); border-radius:6px; padding:10px; display:flex; gap:10px; align-items: center; margin-top:10px; }
+    .item { border:1px solid var(--border); border-radius:6px; padding:10px; display:flex; gap:8px; align-items: center; margin-top:10px; }
         .thumb { width:56px; height:56px; object-fit: cover; border:1px solid var(--border); border-radius:4px; }
         .meta { flex:1; min-width: 0; }
-        .meta .name { font-size: 14px; color:#000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .meta .url { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; color:#000; word-break: break-all; margin-top:4px; }
-        .copy { padding:6px 10px; font-size:12px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer; }
+    .meta .name { font-size: 14px; color:#000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+    .meta .url { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; color:#000; word-break: break-all; margin-top:7px; line-height: 1.2; }
+    .copy { padding:6px 10px; font-size:12px; border:1px solid var(--primary); border-radius:6px; background:var(--primary); color:#fff; cursor:pointer; width:auto; }
+        /* 缩小上传结果里的复制按钮，避免挤压链接导致错位 */
+    .results .item { align-items: flex-start; }
+    .results .item .copy { padding: 4px 6px; font-size: 11px; border-radius: 4px; align-self: flex-start; flex-shrink: 0; width: auto; }
+    .results .item .meta .url { word-break: break-all; overflow-wrap: anywhere; }
         .err { color:#c0392b; font-size:13px; }
-        .muted { color: var(--muted); font-size: 12px; }
+    .muted { color: var(--muted); font-size: 12px; }
+    /* 放大“保留上传列表”的复选框，并使用主题色 */
+    #keepList { transform: scale(1.4); transform-origin: left center; accent-color: var(--primary); }
+    .danger { border-color:#e74c3c; color:#e74c3c; }
+    .copy.danger { background:#fff; color:#e74c3c; border-color:#e74c3c; }
     </style>
 </head>
 <body>
     <div class="wrap">
         <div class="card">
                         <div class="top">
-                                <h1>闲鱼图床</h1>
+                                <h1>AliCDN图床</h1>
                                 <div style="display:flex; gap:8px; align-items:center;">
                                     <button id="btnSetCookie" class="copy" title="更新 cookie2（每周过期可在此更换）">更换 Cookie</button>
                                     <a href="gallery.html" class="copy" style="background: var(--primary); color:#fff; border-color: var(--primary); text-decoration:none; white-space: nowrap;">查看画廊</a>
@@ -55,14 +64,12 @@
                 </div>
 
                 <div>
-                    <label for="category">分类</label>
-                    <select id="category">
+                    <label for="categorySelect">分类</label>
+                    <select id="categorySelect">
                         <option value="未分类">未分类</option>
-                        <option value="头像">头像</option>
-                        <option value="二次元壁纸">二次元壁纸</option>
-                        <option value="截图">截图</option>
-                        <option value="其他">其他</option>
                     </select>
+                    <input id="categoryCustom" type="text" placeholder="输入自定义分类" style="display:none; margin-top:8px;" />
+                    <div class="muted" id="catLoadHint">选择一个分类，或在下拉中选择“自定义…”后输入新分类</div>
                 </div>
 
                 <div>
@@ -76,6 +83,9 @@
 
                 <div>
                     <button id="btnUpload" class="btn">上传</button>
+                    <label style="display:flex; align-items:center; gap:4px; margin-top:12px; font-size:8px; color: var(--muted);">
+                        <input type="checkbox" id="keepList" /> 保留上传列表
+                    </label>
                     <div class="bar" id="bar"><i id="barInner"></i></div>
                     <div class="status" id="status"></div>
                 </div>
@@ -89,7 +99,8 @@
     <script>
         const el = (id) => document.getElementById(id);
         const filesInput = el('files');
-        const categorySel = el('category');
+    const categorySelect = el('categorySelect');
+    const categoryCustom = el('categoryCustom');
         const formatSel = el('format');
         const btn = el('btnUpload');
         const bar = el('bar');
@@ -98,13 +109,30 @@
         const results = el('results');
         const fileTip = el('fileTip');
     const btnSetCookie = el('btnSetCookie');
+        const catLoadHint = el('catLoadHint');
+        const keepList = el('keepList');
+        let lastFiles = [];
 
         filesInput.addEventListener('change', () => {
             const count = filesInput.files?.length || 0;
             fileTip.textContent = count ? `已选择 ${count} 个文件` : '未选择文件';
         });
 
-        btnSetCookie.addEventListener('click', async () => {
+    // 初始化分类候选与行为
+    loadCategories();
+    categorySelect.addEventListener('change', () => {
+        if (categorySelect.value === '__custom__') {
+            categoryCustom.style.display = 'block';
+            setTimeout(() => categoryCustom.focus(), 0);
+        } else {
+            categoryCustom.style.display = 'none';
+            categoryCustom.value = '';
+        }
+    });
+
+    // 首页不再提供“新增分类”入口，避免误操作
+
+    btnSetCookie.addEventListener('click', async () => {
             const v = prompt('输入新的 cookie2 值：');
             if (v == null) return; // 取消
             const cookie2 = (v || '').trim();
@@ -115,7 +143,10 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ cookie2 })
                 });
-                const data = await res.json();
+                const text = await res.text();
+                let data = null;
+                try { data = JSON.parse(text); } catch (_) { throw new Error('响应解析失败'); }
+                if (!res.ok) throw new Error(data && data.message ? data.message : '更新失败');
                 if (!data.success) throw new Error(data.message || '更新失败');
                 alert('Cookie 已更新');
             } catch (e) {
@@ -134,12 +165,22 @@
             setBusy(true);
             resetProgress();
             status.textContent = '上传中…';
-            results.innerHTML = '';
+            if (!keepList.checked) {
+                results.innerHTML = '';
+            } else {
+                // 新批次分隔
+                const sep = document.createElement('div');
+                sep.className = 'muted';
+                sep.style.marginTop = '10px';
+                sep.textContent = '—— 新一批 ——';
+                results.appendChild(sep);
+            }
 
             try {
                 const fd = new FormData();
-                for (const f of files) fd.append('files[]', f);
-                fd.append('category', categorySel.value || '未分类');
+                lastFiles = Array.from(files);
+                for (const f of lastFiles) fd.append('files[]', f);
+                fd.append('category', getSelectedCategory());
                 fd.append('format', formatSel.value || 'original');
 
                 // 采用一次性上传，进度用简单阶段百分比（开始→完成）
@@ -149,7 +190,9 @@
                 const data = await res.json().catch(() => null);
                 if (!data) throw new Error('响应解析失败');
 
-                renderResponse(data);
+                renderResponse(data, lastFiles);
+                // 上传完成后刷新分类候选（后端会在成功时写入新分类）
+                loadCategories();
                 status.textContent = '完成';
                 showProgress(100);
             } catch (e) {
@@ -162,31 +205,90 @@
             }
         });
 
-        function renderResponse(data) {
+        function renderResponse(data, batchFiles) {
             // 单文件
             if (typeof data.success === 'boolean' && (data.data || !data.success)) {
                 if (data.success) {
-                    renderOne({ success:true, data: data.data });
+                    renderOne({ success:true, data: data.data }, 0, batchFiles);
                 } else {
-                    renderOne({ success:false, message: data.message || '上传失败' });
+                    renderOne({ success:false, message: data.message || '上传失败' }, 0, batchFiles);
                 }
                 return;
             }
             // 多文件
             if (Array.isArray(data.results)) {
-                for (const r of data.results) renderOne(r);
+                data.results.forEach((r, i) => renderOne(r, i, batchFiles));
                 return;
             }
             // 未知格式
             results.innerHTML = `<div class="item"><div class="meta err">返回数据格式不符合预期</div></div>`;
         }
 
-        function renderOne(r){
-            if (r.success) {
-                const d = r.data;
-                const url = d && d.url ? d.url : '';
-                const name = d && d.fileName ? d.fileName : '图片';
-                const size = d && d.size ? d.size : '';
+        function getSelectedCategory(){
+            const sel = categorySelect.value;
+            if (sel === '__custom__') {
+                const v = (categoryCustom.value || '').trim();
+                return v || '未分类';
+            }
+            return sel || '未分类';
+        }
+
+        async function loadCategories(){
+            try {
+                const res = await fetch('categories.php?action=list', { cache: 'no-store' });
+                const text = await res.text();
+                console.debug('[categories] status', res.status);
+                let data = null;
+                try { data = JSON.parse(text); } catch (e) { console.error('[categories] JSON parse error', e, text); throw new Error('响应解析失败'); }
+                console.debug('[categories] payload', data);
+                const cats = (data && data.success && Array.isArray(data.data)) ? data.data : ['未分类'];
+                // 填充下拉：未分类置顶，其他按原顺序；并提供“自定义…”选项
+                const prev = getSelectedCategory();
+                while (categorySelect.firstChild) categorySelect.removeChild(categorySelect.firstChild);
+                const ordered = ['未分类', ...cats.filter(c => String(c) !== '未分类')];
+                const seen = new Set();
+                for (const c of ordered) {
+                    const s = String(c);
+                    if (seen.has(s)) continue;
+                    seen.add(s);
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.textContent = s;
+                    categorySelect.appendChild(opt);
+                }
+                const customOpt = document.createElement('option');
+                customOpt.value = '__custom__';
+                customOpt.textContent = '自定义…';
+                categorySelect.appendChild(customOpt);
+
+                // 恢复原选择
+                const target = (prev && prev !== '未分类') ? prev : '未分类';
+                const hasTarget = Array.from(categorySelect.options).some(o => o.value === target);
+                categorySelect.value = hasTarget ? target : '未分类';
+                categoryCustom.style.display = (categorySelect.value === '__custom__') ? 'block' : 'none';
+                if (catLoadHint) catLoadHint.textContent = '';
+            } catch (e) {
+                console.error('[categories] fetch failed', e);
+                while (categorySelect.firstChild) categorySelect.removeChild(categorySelect.firstChild);
+                const def = document.createElement('option'); def.value = '未分类'; def.textContent = '未分类'; categorySelect.appendChild(def);
+                const customOpt = document.createElement('option'); customOpt.value = '__custom__'; customOpt.textContent = '自定义…'; categorySelect.appendChild(customOpt);
+                categorySelect.value = '未分类';
+                categoryCustom.style.display = 'none';
+                if (catLoadHint) catLoadHint.textContent = '分类加载失败：' + (e && e.message ? e.message : '未知错误');
+            }
+        }
+
+        function renderOne(r, index, batchFiles){
+            const node = buildItemNode(r, index, batchFiles);
+            results.appendChild(node);
+        }
+
+        function buildItemNode(r, index, batchFiles){
+            if (r && r.success) {
+                const d = r.data || {};
+                const url = d.url || '';
+                const name = d.fileName || '图片';
+                const size = d.size || '';
                 const node = document.createElement('div');
                 node.className = 'item';
                 node.innerHTML = `
@@ -198,12 +300,90 @@
                     <button class="copy" data-url="${escapeAttr(url)}">复制</button>
                 `;
                 node.querySelector('.copy').addEventListener('click', () => copy(node.querySelector('.copy').dataset.url));
-                results.appendChild(node);
+                return node;
             } else {
+                const msg = (r && r.message) ? r.message : '上传失败';
+                const fname = (r && r.fileName) ? `（${escapeHtml(r.fileName)}）` : '';
                 const node = document.createElement('div');
                 node.className = 'item';
-                node.innerHTML = `<div class="meta err">${escapeHtml(r.message || '上传失败')}</div>`;
-                results.appendChild(node);
+                const canRetry = isRetryable(msg);
+                node.innerHTML = `
+                    <div class="meta err">${escapeHtml(msg)}${fname}</div>
+                    ${canRetry ? '<button class="copy danger">重试</button>' : ''}
+                `;
+                if (canRetry) {
+                    const btnRetry = node.querySelector('.danger');
+                    // 从本批次中取对应文件，避免后续批次覆盖 lastFiles 导致索引错位
+                    const file = Array.isArray(batchFiles) ? batchFiles[index] : (Array.isArray(lastFiles) ? lastFiles[index] : undefined);
+                    btnRetry.addEventListener('click', () => retryOne(file, node));
+                }
+                return node;
+            }
+        }
+
+        // 判断是否具备重试价值：网络/超时/服务端异常可重试；格式问题等不可重试
+        function isRetryable(message){
+            const msg = String(message || '').toLowerCase();
+            // 明确不可重试的关键词
+            const nonRetry = [
+                '格式', // 中文“格式”
+                'invalid type',
+                'unsupported type',
+                'file type',
+                'mimetype',
+                '类型', // 中文“类型”
+                'size', '文件大小', 'too large', '超过',
+            ];
+            if (nonRetry.some(k => msg.includes(k))) return false;
+            // 典型可重试关键词
+            const retryable = [
+                'curl', 'timeout', 'timed out', 'time out',
+                'connect', 'resolve', 'dns', 'recv', 'send',
+                '429', '408', '500', '502', '503', '504', '5xx', 'server', '网关', '超时'
+            ];
+            return retryable.some(k => msg.includes(k));
+        }
+
+        async function retryOne(file, node){
+            try {
+                if (!file) {
+                    alert('无法重试：找不到原文件');
+                    return;
+                }
+                const fd = new FormData();
+                fd.append('files[]', file);
+                fd.append('category', getSelectedCategory());
+                fd.append('format', formatSel.value || 'original');
+
+                // 按钮状态
+                const btn = node.querySelector('.danger');
+                if (btn) { btn.textContent = '重试中…'; btn.disabled = true; }
+
+                const res = await fetch('upload.php', { method: 'POST', body: fd });
+                const data = await res.json().catch(() => null);
+                let r = null;
+                if (data && typeof data.success === 'boolean') {
+                    r = data;
+                } else if (data && Array.isArray(data.results) && data.results.length) {
+                    r = data.results[0];
+                } else {
+                    r = { success:false, message: '响应解析失败' };
+                }
+
+                // 用新结果替换该节点
+                const newNode = buildItemNode(r, 0, [file]);
+                node.replaceWith(newNode);
+
+                // 如果成功，刷新分类候选（避免自定义分类刚创建时下拉未更新）
+                if (r && r.success) {
+                    loadCategories();
+                }
+            } catch (e) {
+                const msg = (e && e.message) ? e.message : '重试失败';
+                const meta = node.querySelector('.meta');
+                if (meta) meta.textContent = msg;
+                const btn = node.querySelector('.danger');
+                if (btn) { btn.textContent = '重试'; btn.disabled = false; }
             }
         }
 
@@ -228,7 +408,7 @@
             setTimeout(()=>{ btn.textContent = old; btn.disabled = false; }, 600);
         }
 
-        function setBusy(b){ btn.disabled = b; filesInput.disabled = b; categorySel.disabled = b; formatSel.disabled = b; }
+    function setBusy(b){ btn.disabled = b; filesInput.disabled = b; categorySelect.disabled = b; categoryCustom.disabled = b; formatSel.disabled = b; }
         function showProgress(p){ bar.style.display = 'block'; barInner.style.width = Math.max(0, Math.min(100, p)) + '%'; }
         function resetProgress(){ bar.style.display = 'none'; barInner.style.width = '0%'; }
 

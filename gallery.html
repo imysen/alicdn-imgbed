@@ -63,6 +63,10 @@
           <button id="btnRenameCat">重命名</button>
           <button id="btnDeleteCat" class="danger">删除分类</button>
         </div>
+        <div class="cat-row" style="grid-template-columns: 1fr auto;">
+          <input id="catNew" type="text" placeholder="新增分类名" />
+          <button id="btnAddCat">新增分类</button>
+        </div>
       </div>
 
       <div class="stats" id="stats">统计：总数 0 · 分类 0</div>
@@ -86,6 +90,8 @@
   const catTo = el('catTo');
   const btnRenameCat = el('btnRenameCat');
   const btnDeleteCat = el('btnDeleteCat');
+  const catNew = el('catNew');
+  const btnAddCat = el('btnAddCat');
 
     let all = [];
     let filtered = [];
@@ -99,6 +105,7 @@
       btnOpenJson.addEventListener('click', ()=>{ window.open('gallery.json', '_blank'); });
       btnRenameCat.addEventListener('click', onRenameCategory);
       btnDeleteCat.addEventListener('click', onDeleteCategory);
+      btnAddCat.addEventListener('click', onAddCategory);
     });
 
     async function load(){
@@ -108,7 +115,7 @@
         const data = await res.json();
         if (!Array.isArray(data)) throw new Error('数据格式错误');
         all = data;
-        buildCategories(all);
+      await buildCategories();
         applyFilter();
       } catch (e) {
         grid.innerHTML = `<div class="error">${escapeHtml(e.message || '加载出错')}</div>`;
@@ -116,20 +123,32 @@
       }
     }
 
-    function buildCategories(list){
-      const set = new Set(['全部']);
-      list.forEach(x => x.category && set.add(x.category));
-      selCategory.innerHTML = '';
-      for (const c of set){
-        const opt = document.createElement('option');
-        opt.value = c; opt.textContent = c; selCategory.appendChild(opt);
-      }
-      // 分类管理下拉（不含“全部”）
-      const cats = Array.from(set).filter(x => x !== '全部');
-      catFrom.innerHTML = '';
-      for (const c of cats){
-        const opt = document.createElement('option');
-        opt.value = c; opt.textContent = c; catFrom.appendChild(opt);
+    async function buildCategories(){
+      const prevSel = selCategory.value || '全部';
+      const prevFrom = catFrom.value || '';
+      try {
+        const res = await fetch('categories.php?action=list', { cache: 'no-store' });
+        const data = await res.json();
+        const catsArr = (data && data.success && Array.isArray(data.data)) ? data.data : ['未分类'];
+        const set = new Set(['全部', ...catsArr]);
+        selCategory.innerHTML = '';
+        for (const c of set){
+          const opt = document.createElement('option');
+          opt.value = c; opt.textContent = c; selCategory.appendChild(opt);
+        }
+        const cats = Array.from(set).filter(x => x !== '全部');
+        catFrom.innerHTML = '';
+        for (const c of cats){
+          const opt = document.createElement('option');
+          opt.value = c; opt.textContent = c; catFrom.appendChild(opt);
+        }
+        // 恢复之前的选择
+        if (Array.from(selCategory.options).some(o=>o.value===prevSel)) selCategory.value = prevSel; else selCategory.value = '全部';
+        if (prevFrom && Array.from(catFrom.options).some(o=>o.value===prevFrom)) catFrom.value = prevFrom;
+      } catch (_) {
+        // 兜底
+        selCategory.innerHTML = '<option value="全部">全部</option><option value="未分类">未分类</option>';
+        catFrom.innerHTML = '<option value="未分类">未分类</option>';
       }
     }
 
@@ -213,6 +232,8 @@
       const from = catFrom.value || '';
       const to = (catTo.value || '').trim();
       if (!from || !to) { alert('请选择原分类并填写新分类名'); return; }
+      if (from === to) { alert('新旧分类相同，无需重命名'); return; }
+      if (from === '未分类') { alert('“未分类”不可重命名'); return; }
       try {
         const res = await fetch('manage.php', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -223,6 +244,17 @@
         // 刷新本地数据
         all.forEach(x => { if (x.category === from) x.category = to; });
         buildCategories(all);
+        // 同步更新分类表并确认结果
+        try {
+          const r2 = await fetch('categories.php?action=rename', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ from, to }) });
+          const j2 = await r2.json();
+          if (!j2.success) throw new Error(j2.message || '分类表重命名失败');
+          const arr = Array.isArray(j2.data) ? j2.data.map(String) : [];
+          if (!arr.includes(String(to)) || arr.includes(String(from))) {
+            throw new Error('分类表未更新，请重试');
+          }
+        } catch (e) { alert(e.message || '分类表重命名失败'); }
+        await buildCategories();
         applyFilter();
         catTo.value = '';
         alert('已重命名');
@@ -232,6 +264,7 @@
     async function onDeleteCategory(){
       const name = catFrom.value || '';
       if (!name) { alert('请选择要删除的分类'); return; }
+      if (name === '未分类') { alert('“未分类”不可删除'); return; }
       if (!confirm(`确认删除分类 “${name}” 吗？该分类下图片将移动到“未分类”。`)) return;
       try {
         const res = await fetch('manage.php', {
@@ -243,9 +276,46 @@
         // 刷新本地数据
         all.forEach(x => { if (x.category === name) x.category = '未分类'; });
         buildCategories(all);
+          // 同步从分类表移除并确认结果
+          try {
+            const r2 = await fetch('categories.php?action=remove', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name }) });
+            const j2 = await r2.json();
+            if (!j2.success) throw new Error(j2.message || '分类表删除失败');
+            const arr = Array.isArray(j2.data) ? j2.data.map(String) : [];
+            if (arr.includes(String(name))) {
+              throw new Error('分类表未删除该分类');
+            }
+          } catch (e) { alert(e.message || '分类表删除失败'); }
+          await buildCategories();
         applyFilter();
         alert('已删除分类');
       } catch (e) { alert(e.message || '删除分类失败'); }
+    }
+
+    async function onAddCategory(){
+      const name = (catNew.value || '').trim();
+      if (!name) { alert('请输入分类名'); return; }
+      if (name === '未分类') { alert('“未分类”已存在'); return; }
+      try {
+        const res = await fetch('categories.php?action=add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || '添加失败');
+        await buildCategories();
+        // 便于后续操作，选择到新分类
+        const opts = Array.from(selCategory.options).map(o=>o.value);
+        if (opts.includes(name)) selCategory.value = name;
+        const optsFrom = Array.from(catFrom.options).map(o=>o.value);
+        if (optsFrom.includes(name)) catFrom.value = name;
+        catNew.value = '';
+        applyFilter();
+        alert('已添加分类');
+      } catch (e) {
+        alert((e && e.message) ? e.message : '添加失败');
+      }
     }
 
     function copy(text){

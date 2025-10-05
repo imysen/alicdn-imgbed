@@ -2,10 +2,35 @@
 // 通过接口更新 config.php 中的 COOKIE2_VALUE（便于每周更换）
 // 仅修改本地配置，不做任何外部请求
 
+// 确保任何情况下都只输出合法 JSON，避免前端解析失败
+ob_start();
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+ini_set('html_errors', 0);
+ini_set('log_errors', 1);
+
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
+
+set_error_handler(function($severity, $message, $file, $line){
+    if (ob_get_level()) { ob_clean(); }
+    echo json_encode([
+        'success' => false,
+        'message' => '服务器内部错误，请稍后重试'
+    ], JSON_UNESCAPED_UNICODE);
+    exit(1);
+});
+
+set_exception_handler(function($e){
+    if (ob_get_level()) { ob_clean(); }
+    echo json_encode([
+        'success' => false,
+        'message' => '服务器异常，请稍后重试'
+    ], JSON_UNESCAPED_UNICODE);
+    exit(1);
+});
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
@@ -20,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $contentType = isset($_SERVER['CONTENT_TYPE']) ? strtolower($_SERVER['CONTENT_TYPE']) : '';
 if (strpos($contentType, 'application/json') !== false) {
     $raw = file_get_contents('php://input');
-    $body = json_decode($raw, true);
+    $body = json_decode($raw ?: 'null', true);
 } else {
     $body = $_POST;
 }
@@ -72,7 +97,10 @@ if (!$ok) {
     exit;
 }
 
+// 返回脱敏后的 cookie2
 $mask = (strlen($cookie) > 6) ? (str_repeat('*', max(0, strlen($cookie) - 6)) . substr($cookie, -6)) : $cookie;
+
+if (ob_get_level()) { ob_clean(); }
 echo json_encode(['success' => true, 'message' => '已更新', 'cookie2' => $mask], JSON_UNESCAPED_UNICODE);
 exit;
 ?>

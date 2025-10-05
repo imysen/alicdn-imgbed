@@ -1,0 +1,18 @@
+[2025-10-06 03:22:00] renameCategory '12' -> '36', updated=0
+[2025-10-06 03:22:10] renameCategory '36' -> '444', updated=0
+[2025-10-06 03:31:50] delete id=68e2c78f3fbf6 ok, total=5
+[2025-10-06 03:31:52] delete id=68e2c6d2db7e9 ok, total=4
+[2025-10-06 03:31:55] delete id=68e2c5835dab4 ok, total=3
+[2025-10-06 03:32:05] deleteCategory '12' no change
+[2025-10-06 03:32:18] renameCategory '223' -> '22222', updated=0
+[2025-10-06 03:39:43] renameCategory '12' -> 'p', updated=0
+[2025-10-06 03:39:50] deleteCategory '12' -> '未分类', moved=0
+[2025-10-06 03:40:11] renameCategory '444' -> 'qqwww', updated=0
+[2025-10-06 03:41:00] renameCategory '12' -> 'we', updated=0
+[2025-10-06 03:44:05] renameCategory '未分类' -> '11111144444', updated=0
+[2025-10-06 03:45:36] delete id=689ad65c605a9 ok, total=2
+[2025-10-06 03:45:38] delete id=689ad65c126e2 ok, total=1
+[2025-10-06 03:45:46] renameCategory '36' -> 'pppppppppppp', updated=0
+[2025-10-06 03:51:01] deleteCategory '12' -> '未分类', moved=0
+[2025-10-06 03:51:05] deleteCategory '223' -> '未分类', moved=0
+[2025-10-06 03:51:13] renameCategory '36' -> '1', updated=0

@@ -117,6 +117,11 @@ if (ENABLE_RATE_LIMIT && !checkRateLimit()) {
     respondWithError(getErrorMessage('rate_limit'));
 }
 
+// 检查是否配置了 cookie2
+if (!defined('COOKIE2_VALUE') || trim(COOKIE2_VALUE) === '') {
+    respondWithError('未设置 cookie2，请先在首页点击“更换 Cookie”更新');
+}
+
 // 主要处理逻辑包装在try-catch中
 try {
     // 检查是否有文件上传 - 支持多文件上传
@@ -239,6 +244,22 @@ for ($i = 0; $i < count($files['name']); $i++) {
         
         // 保存到画廊JSON
         saveToGallery($result['data'], $category);
+        // 将分类写入分类表（若不存在）
+        try {
+            $catFile = __DIR__ . '/categories.json';
+            $cats = [];
+            if (file_exists($catFile)) {
+                $txt = file_get_contents($catFile);
+                $cats = json_decode($txt, true);
+                if (!is_array($cats)) $cats = [];
+            }
+            $categorySafe = trim($category) === '' ? '未分类' : trim($category);
+            if (!in_array($categorySafe, $cats, true)) {
+                $cats[] = $categorySafe;
+                if (!in_array('未分类', $cats, true)) array_unshift($cats, '未分类');
+                @file_put_contents($catFile, json_encode(array_values(array_unique($cats)), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
+            }
+        } catch (\Throwable $__) {}
         
         // 记录日志
         if (ENABLE_LOGGING) {
@@ -369,42 +390,101 @@ function uploadToGoofish($file) {
         'Referer: https://author.goofish.com/',
         'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
         'Cookie: cookie2=' . COOKIE2_VALUE,
-        'Content-Length: ' . strlen($postData)
+        'Content-Length: ' . strlen($postData),
+        // 禁用 Expect: 100-continue，避免某些网络/代理下的额外握手导致超时
+        'Expect:'
     ];
-    
-    // 发送请求到闲鱼API
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-        CURLOPT_URL => GOOFISH_UPLOAD_URL . '?_input_charset=utf-8&appkey=fleamarket',
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => $postData,
-        CURLOPT_HTTPHEADER => $headers,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_SSL_VERIFYHOST => false,
-        CURLOPT_TIMEOUT => 30,
-        CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36'
-    ]);
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
-    curl_close($ch);
-    
+
+    // 读配置
+    $timeout = defined('HTTP_TIMEOUT') ? (int)HTTP_TIMEOUT : 75;
+    $connectTimeout = defined('HTTP_CONNECT_TIMEOUT') ? (int)HTTP_CONNECT_TIMEOUT : 10;
+    $retryTimes = defined('HTTP_RETRY_TIMES') ? (int)HTTP_RETRY_TIMES : 2;
+    $backoffMs = defined('HTTP_RETRY_BACKOFF_MS') ? (int)HTTP_RETRY_BACKOFF_MS : 600;
+    $ipV4Only = defined('HTTP_IPRESOLVE_V4') ? (bool)HTTP_IPRESOLVE_V4 : false;
+
+    $attempt = 0;
+    $lastError = '';
+    $lastHttp = 0;
+    $response = '';
+
+    while (true) {
+        $ch = curl_init();
+        $opts = [
+            CURLOPT_URL => GOOFISH_UPLOAD_URL . '?_input_charset=utf-8&appkey=fleamarket',
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $postData,
+            CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_TIMEOUT => max(5, $timeout),
+            CURLOPT_CONNECTTIMEOUT => max(1, $connectTimeout),
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+            // 自动支持 gzip/deflate
+            CURLOPT_ENCODING => ''
+        ];
+        if ($ipV4Only && defined('CURL_IPRESOLVE_V4')) {
+            $opts[CURLOPT_IPRESOLVE] = CURL_IPRESOLVE_V4;
+        }
+        curl_setopt_array($ch, $opts);
+
+        $response = curl_exec($ch);
+        $errno = curl_errno($ch);
+        $error = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $lastError = $error;
+        $lastHttp = (int)$httpCode;
+
+        $shouldRetry = false;
+        if ($errno) {
+            // 典型网络错误/超时错误重试
+            $retryErrnos = [
+                CURLE_OPERATION_TIMEDOUT,
+                CURLE_COULDNT_CONNECT,
+                CURLE_COULDNT_RESOLVE_HOST,
+                CURLE_RECV_ERROR,
+                CURLE_SEND_ERROR
+            ];
+            $shouldRetry = in_array($errno, $retryErrnos, true);
+        } else if ($httpCode === 0 || $httpCode === 408 || $httpCode === 429 || $httpCode >= 500) {
+            // 超时/限流/服务端异常也尝试重试
+            $shouldRetry = true;
+        }
+
+        if (!$shouldRetry) {
+            break; // 成功或不适合重试
+        }
+
+        if ($attempt >= $retryTimes) {
+            break; // 达到最大重试次数
+        }
+
+        $delay = (int)($backoffMs * pow(2, $attempt) + mt_rand(0, 200));
+        if (function_exists('logMessage')) {
+            logMessage("retry upload attempt=" . ($attempt + 1) . "/" . ($retryTimes + 1) . ", http={$httpCode}, errno={$errno}, delayMs={$delay}");
+        }
+        usleep($delay * 1000);
+        $attempt++;
+    }
+
     // 检查请求是否成功
-    if ($error) {
+    if ($lastError) {
         return [
             'success' => false,
-            'message' => getErrorMessage('curl_error') . ': ' . $error
+            'message' => getErrorMessage('curl_error') . ': ' . $lastError,
+            'attempts' => $attempt + 1
         ];
     }
     
-    if ($httpCode !== 200) {
+    if ($lastHttp !== 200) {
         return [
             'success' => false,
-            'message' => getErrorMessage('http_error') . ': ' . $httpCode,
-            'response' => $response
+            'message' => getErrorMessage('http_error') . ': ' . $lastHttp,
+            'response' => $response,
+            'attempts' => $attempt + 1
         ];
     }
     
