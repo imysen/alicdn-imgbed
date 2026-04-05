@@ -5,75 +5,168 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>图片画廊 - 闲鱼图床</title>
   <style>
-    :root { --border:#e5e5e5; --text:#222; --muted:#666; --bg:#f6f6f6; --primary:#0d6efd; }
-    * { box-sizing: border-box; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
-    .wrap { max-width: 960px; margin: 40px auto; padding: 0 16px; }
-    .card { background:#fff; border:1px solid var(--border); border-radius:8px; padding:16px; }
-    .top { display:flex; align-items:center; justify-content: space-between; margin-bottom:12px; }
-    h1 { font-size:20px; margin:0; font-weight:600; }
-    .top a { color: var(--primary); text-decoration: none; font-size: 13px; }
-    .muted { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
-  .controls { display:grid; grid-template-columns: 1fr 220px auto auto auto; gap: 8px; align-items: center; }
-    .controls input[type="text"], .controls select, .controls button { padding: 8px 10px; font-size:14px; border:1px solid var(--border); border-radius:6px; background:#fff; }
-    .controls button { cursor: pointer; }
-    .controls .primary { background: var(--primary); color:#fff; border-color: var(--primary); }
-    .stats { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
-    .grid { margin-top: 12px; display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
-    .item { border:1px solid var(--border); border-radius:6px; overflow:hidden; background:#fff; display:flex; flex-direction: column; }
-    .item img { display:block; width:100%; height:140px; object-fit: cover; background:#fafafa; }
-    .info { padding:8px; }
-    .name { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .meta { margin-top:4px; font-size: 12px; color: var(--muted); display:flex; justify-content: space-between; }
-  .acts { display:flex; gap:6px; padding:8px; border-top:1px solid var(--border); flex-wrap: wrap; }
-  .acts button, .acts a { padding:6px 8px; font-size:12px; border:1px solid var(--border); background:#fff; color:#000; border-radius:6px; cursor:pointer; text-decoration:none; }
-  .acts .danger { border-color:#e74c3c; color:#e74c3c; }
-    .empty, .error, .loading { padding: 24px; text-align: center; color: var(--muted); }
-  .cat-panel { margin-top:12px; padding:12px; border:1px dashed var(--border); border-radius:6px; background:#fafafa; }
-  .cat-row { display:grid; grid-template-columns: 1fr 1fr auto auto; gap:8px; margin-top:8px; }
-  .cat-row input, .cat-row select, .cat-row button { padding:8px 10px; font-size:13px; border:1px solid var(--border); border-radius:6px; background:#fff; }
-  .cat-row button { cursor:pointer; }
-    @media (max-width: 720px) {
-      .controls { grid-template-columns: 1fr 1fr; }
+    :root {
+        --text: #1d1d1f;
+        --muted: rgba(29, 29, 31, 0.6);
+        --bg-gradient: linear-gradient(135deg, #e4ebf5 0%, #f3e5f5 100%);
+        --primary: rgba(0, 122, 255, 0.85);
+        --glass-bg: rgba(255, 255, 255, 0.25);
+        --glass-border: rgba(255, 255, 255, 0.4);
+        --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+    }
+    * { box-sizing: border-box; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    body {
+        margin:0; 
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif; 
+        background: var(--bg-gradient); 
+        min-height: 100vh;
+        color: var(--text);
+        background-attachment: fixed;
+        padding: 40px 5%;
+    }
+    .container { 
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px 32px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--glass-border);
+        border-radius: 28px;
+        box-shadow: var(--glass-shadow);
+    }
+    h1 { font-size: 32px; margin: 0; font-weight: 700; letter-spacing: -0.5px; }
+    .header a { 
+        font-size: 15px; font-weight: 600; padding: 12px 20px; 
+        border-radius: 20px; text-decoration: none; cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        background: rgba(255,255,255,0.4); color: var(--text); 
+        backdrop-filter: blur(12px); border: 1px solid var(--glass-border);
+    }
+    .header a:hover { background: rgba(255,255,255,0.7); transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+    .muted { color: var(--muted); font-size: 15px; margin: 0; padding-left: 4px; }
+    
+    .panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--glass-border);
+        border-radius: 28px;
+        padding: 24px;
+        box-shadow: var(--glass-shadow);
+    }
+    
+    .controls { display:flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .controls input[type="text"], .controls select, .controls button { 
+        padding: 14px 20px; font-size: 15px; 
+        border: 1px solid var(--glass-border); border-radius: 18px; 
+        background: rgba(255, 255, 255, 0.3); color: var(--text);
+        backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        transition: all 0.3s ease; outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+    }
+    .controls input:focus, .controls select:focus {
+        background: rgba(255,255,255,0.7); box-shadow: 0 0 0 4px rgba(0,122,255,0.1), inset 0 2px 4px rgba(0,0,0,0.01);
+    }
+    .controls button { font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.4); }
+    .controls button:hover { background: rgba(255,255,255,0.8); transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+    .controls .primary { background: var(--primary); color: #fff; border: none; box-shadow: 0 8px 20px rgba(0,122,255,0.2); }
+    .controls .primary:hover { background: #007aff; box-shadow: 0 12px 25px rgba(0,122,255,0.3); }
+    
+    .stats { margin: 16px 0 0; font-size: 15px; font-weight: 500; color: var(--muted); padding-left: 8px; }
+    
+    .grid { margin-top: 12px; display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; }
+    .item { 
+        border: 1px solid var(--glass-border); 
+        border-radius: 24px; overflow: hidden; 
+        background: rgba(255,255,255,0.3); 
+        display: flex; flex-direction: column; 
+        box-shadow: 0 8px 24px rgba(0,0,0,0.02);
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .item:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(0,0,0,0.08); background: rgba(255,255,255,0.6); }
+    .item img { display:block; width:100%; height:180px; object-fit: cover; background: transparent; transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .item:hover img { transform: scale(1.05); }
+    .info { padding: 16px; z-index: 2; background: inherit; }
+    .name { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+    .meta { font-size: 13px; color: var(--muted); display:flex; justify-content: space-between; }
+    .acts { display:flex; gap: 8px; padding: 16px; border-top: 1px solid rgba(255,255,255,0.2); flex-wrap: wrap; z-index: 2; background: inherit; }
+    .acts button, .acts a { 
+        flex: 1; text-align: center;
+        padding: 10px 6px; font-size: 14px; font-weight: 600; 
+        background: rgba(255,255,255,0.5); color: var(--text); border: none; border-radius: 14px; 
+        cursor:pointer; text-decoration:none; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .acts button:hover, .acts a:hover { background: rgba(0,122,255,0.1); color: #007aff; transform: scale(1.05); }
+    .acts .danger { color: #ff3b30; }
+    .acts .danger:hover { background: rgba(255,59,48,0.1); color: #ff3b30; }
+    .empty, .error, .loading { padding: 60px; text-align: center; color: var(--muted); font-size: 16px; font-weight: 500; grid-column: 1 / -1; }
+    
+    .cat-row { display:flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+    .cat-row input, .cat-row select { 
+        flex: 1; min-width: 150px;
+        padding: 14px 20px; font-size: 15px; border: 1px solid var(--glass-border); border-radius: 18px; 
+        background: rgba(255,255,255,0.3); outline: none; transition: all 0.3s ease;
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    }
+    .cat-row input:focus, .cat-row select:focus { background: rgba(255,255,255,0.7); box-shadow: 0 0 0 4px rgba(0,122,255,0.1); }
+    .cat-row button { 
+        padding: 14px 24px; font-size: 15px; font-weight: 600; 
+        border: none; border-radius: 18px; background: rgba(255,255,255,0.4); cursor:pointer; transition: all 0.3s ease;
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--glass-border);
+    }
+    .cat-row button:hover { background: rgba(255,255,255,0.8); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+    .cat-row .danger { color: #ff3b30; background: rgba(255,59,48,0.05); }
+    .cat-row .danger:hover { background: rgba(255,59,48,0.15); box-shadow: 0 8px 20px rgba(255,59,48,0.2); }
+    @media (max-width: 768px) {
+        body { padding: 20px 16px; }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="top">
+  <div class="container">
+    <div class="header">
+      <div>
         <h1>图片画廊</h1>
-        <a href="index.html">返回上传</a>
+        <p class="muted">查看与管理已上传的图片，可按分类与名称筛选。</p>
       </div>
-      <p class="muted">查看与管理已上传的图片，可按分类与名称筛选。</p>
+      <a href="index.html">返回上传</a>
+    </div>
 
+    <div class="panel">
       <div class="controls">
-        <input id="kw" type="text" placeholder="搜索文件名" />
-        <select id="selCategory"></select>
+        <input id="kw" type="text" placeholder="搜索文件名" style="flex: 2; min-width: 200px;" />
+        <select id="selCategory" style="flex: 1; min-width: 150px;"></select>
         <button id="btnRefresh">刷新</button>
         <button id="btnExport">导出数据</button>
         <button id="btnOpenJson" class="primary" title="打开原始数据">打开JSON</button>
       </div>
-
-      <div class="cat-panel" id="catPanel">
-        <div class="muted">分类管理：可以重命名分类或删除分类（删除分类仅把该分类下图片移至“未分类”）。</div>
-        <div class="cat-row">
-          <select id="catFrom"></select>
-          <input id="catTo" type="text" placeholder="新分类名（用于重命名）" />
-          <button id="btnRenameCat">重命名</button>
-          <button id="btnDeleteCat" class="danger">删除分类</button>
-        </div>
-        <div class="cat-row" style="grid-template-columns: 1fr auto;">
-          <input id="catNew" type="text" placeholder="新增分类名" />
-          <button id="btnAddCat">新增分类</button>
-        </div>
-      </div>
-
       <div class="stats" id="stats">统计：总数 0 · 分类 0</div>
+    </div>
 
-      <div id="grid" class="grid">
-        <div class="loading">正在加载…</div>
+    <div class="panel" id="catPanel">
+      <div class="muted" style="margin-bottom: 8px;">分类管理：可以重命名分类或删除分类（删除分类仅把该分类下图片移至“未分类”）。</div>
+      <div class="cat-row">
+        <select id="catFrom"></select>
+        <input id="catTo" type="text" placeholder="新分类名（用于重命名）" />
+        <button id="btnRenameCat">重命名</button>
+        <button id="btnDeleteCat" class="danger">删除分类</button>
       </div>
+      <div class="cat-row">
+        <input id="catNew" type="text" placeholder="新增分类名" style="flex: 3;" />
+        <button id="btnAddCat" style="flex: 1;">新增分类</button>
+      </div>
+    </div>
+
+    <div id="grid" class="grid">
+      <div class="loading">正在加载…</div>
     </div>
   </div>
 
