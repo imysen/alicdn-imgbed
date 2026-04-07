@@ -4,168 +4,283 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AliCDN图床</title>
+    <link rel="icon" href="icon.png" />
     <style>
-        :root {
-            --text: #1d1d1f;
-            --muted: rgba(29, 29, 31, 0.6);
-            --bg-gradient: linear-gradient(135deg, #e4ebf5 0%, #f3e5f5 100%);
-            --primary: rgba(0, 122, 255, 0.85);
-            --glass-bg: rgba(255, 255, 255, 0.25);
-            --glass-border: rgba(255, 255, 255, 0.4);
-            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
-        }
-        * { box-sizing: border-box; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
-        body { 
-            margin: 0; 
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif; 
-            background: var(--bg-gradient); 
-            min-height: 100vh;
-            color: var(--text); 
-            line-height: 1.5; 
-            background-attachment: fixed;
-            padding: 40px 5%;
-        }
-        .container { 
-            max-width: 1000px;
-            margin: 0 auto;
+
+    :root {
+        --text: #1d1d1f;
+        --muted: rgba(29, 29, 31, 0.6);
+        --bg-gradient: linear-gradient(135deg, #e4ebf5 0%, #f3e5f5 100%);
+        --primary: rgba(0, 122, 255, 0.85);
+
+        /* iOS 26 Future Glassmorphism */
+        --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.15) 100%);
+        --glass-bg-hover: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.35) 100%);
+        
+        --shadow-base: 0 8px 32px rgba(0, 0, 0, 0.12), inset 0 4px 6px -2px rgba(255, 255, 255, 0.9), inset 0 -4px 6px -2px rgba(0, 0, 0, 0.05);
+        --shadow-hover: 0 15px 40px rgba(0, 0, 0, 0.2), 0 0 20px rgba(255, 255, 255, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.9), inset 0 -4px 6px -2px rgba(0, 0, 0, 0.05);
+        
+        --trans-smooth: all 0.6s cubic-bezier(0.1, 0.9, 0.2, 1);
+        --trans-bounce: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.08);
+    }
+
+    * { box-sizing: border-box; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    
+    body { 
+        margin: 0; 
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif; 
+        background: var(--bg-gradient); 
+        min-height: 100vh;
+        color: var(--text); 
+        line-height: 1.5; 
+        background-attachment: fixed;
+        padding: 40px 5%;
+        overflow-x: hidden;
+    }
+
+    @keyframes slideInLeft {
+      0% { opacity: 0; transform: perspective(500px) translateX(-40px) rotateY(-15deg); }
+      100% { opacity: 1; transform: perspective(500px) translateX(0) rotateY(0deg); }
+    }
+    @keyframes slideInUp {
+      0% { opacity: 0; transform: perspective(500px) translateY(40px) rotateX(-15deg); }
+      100% { opacity: 1; transform: perspective(500px) translateY(0) rotateX(0deg); }
+    }
+
+    .container { 
+        max-width: 1000px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+        animation: slideInLeft 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.08) backwards;
+    }
+
+    .glass-panel {
+        background: var(--glass-bg);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-top: 1px solid rgba(255, 255, 255, 0.8);
+        border-left: 1px solid rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(24px) saturate(150%);
+        -webkit-backdrop-filter: blur(24px) saturate(150%);
+        box-shadow: var(--shadow-base);
+        border-radius: 32px;
+        transition: var(--trans-smooth);
+        transform: perspective(500px) rotateX(0deg) rotateY(0deg) scale(1) translateY(0);
+    }
+    
+    .glass-panel:hover {
+        transform: perspective(500px) rotateX(1deg) rotateY(-1deg) scale(1.01) translateY(-1px);
+        box-shadow: var(--shadow-hover);
+        background: var(--glass-bg-hover);
+        border-top: 1px solid rgba(255, 255, 255, 1);
+        border-left: 1px solid rgba(255, 255, 255, 1);
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 32px;
+        border-radius: 28px;
+    }
+    h1 { font-size: 32px; margin: 0; font-weight: 700; letter-spacing: -0.5px; }
+    .header-actions { display: flex; gap: 12px; }
+        
+        .logo-wrap {
             display: flex;
-            flex-direction: column;
-            gap: 32px;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 20px 32px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid var(--glass-border);
-            border-radius: 28px;
-            box-shadow: var(--glass-shadow);
+            gap: 16px;
         }
-        h1 { font-size: 32px; margin: 0; font-weight: 700; letter-spacing: -0.5px; }
-        .header-actions { display: flex; gap: 12px; }
-        .header a, .header button {
-            font-size: 15px; font-weight: 600; padding: 12px 20px; 
-            border-radius: 20px; text-decoration: none; cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); border: none;
-            background: rgba(255, 255, 255, 0.4);
-            color: var(--text);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        .logo-wrap img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        .header a { background: var(--primary); color: #fff; border-color: rgba(255,255,255,0.2); }
-        .header a:hover, .header button:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 20px rgba(0,0,0,0.06); background: rgba(255,255,255,0.6); }
-        .header a:hover { background: #007aff; box-shadow: 0 8px 20px rgba(0,122,255,0.3); }
+    .glass-btn {
+        font-size: 15px; font-weight: 600; padding: 12px 20px; 
+        border-radius: 999px; text-decoration: none; cursor: pointer;
+        transition: var(--trans-smooth);
+        transform: perspective(500px) rotateX(0deg) rotateY(0deg) scale(1) translateY(0);
+        background: var(--glass-bg);
+        color: var(--text);
+        backdrop-filter: blur(24px) saturate(150%);
+        -webkit-backdrop-filter: blur(24px) saturate(150%);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-top: 1px solid rgba(255, 255, 255, 0.8);
+        border-left: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: var(--shadow-base);
+    }
+    .glass-btn:hover, .btn-primary:hover {
+        background: var(--glass-bg-hover);
+        border-top: 1px solid rgba(255, 255, 255, 1);
+        border-left: 1px solid rgba(255, 255, 255, 1);
+        transform: perspective(500px) rotateX(8deg) rotateY(-4deg) scale(1.03) translateY(-2px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, rgba(0, 122, 255, 0.7) 0%, rgba(0, 122, 255, 0.5) 100%);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-top: 1px solid rgba(255, 255, 255, 0.7);
+        border-left: 1px solid rgba(255, 255, 255, 0.5);
+    }
+    .btn-primary:hover {
+        background: linear-gradient(135deg, rgba(0, 122, 255, 0.9) 0%, rgba(0, 122, 255, 0.7) 100%);
+        color: #fff;
+    }
+
+    .main-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 24px;
+        animation: slideInUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.08) 0.2s backwards;
+    }
+    @media (min-width: 768px) {
+        .main-grid { grid-template-columns: 2fr 1fr; }
+    }
+    
+    .panel { padding: 32px; }
+    
+    .upload-area { display: flex; flex-direction: column; gap: 24px; }
+    
+    label { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: block; padding-left: 4px; }
+    
+    .glass-input {
+        width: 100%; padding: 18px 24px; font-size: 16px; 
+        border-radius: 20px; 
+        background: rgba(255, 255, 255, 0.3); 
+        color: var(--text);
+        backdrop-filter: blur(16px) saturate(150%);
+        -webkit-backdrop-filter: blur(16px) saturate(150%);
+        transition: var(--trans-smooth); outline: none;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-top: 1px solid rgba(255, 255, 255, 0.6);
+        border-left: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: inset 0 2px 6px -2px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(255,255,255,0.6);
+        appearance: none; -webkit-appearance: none;
+        transform: perspective(500px) rotateX(0deg) rotateY(0deg) scale(1) translateY(0);
+    }
+    .glass-input:focus {
+        background: rgba(255,255,255,0.7);
+        border-color: rgba(0,122,255,0.5);
+        border-top: 1px solid rgba(255, 255, 255, 1);
+        border-left: 1px solid rgba(255, 255, 255, 1);
+        transform: perspective(500px) rotateX(2deg) rotateY(-1deg) scale(1.01) translateY(-1px);
+        box-shadow: 0 0 0 4px rgba(0,122,255,0.15), inset 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    /* 极致炫彩边框选择文件按钮 */
+    .glass-input::-webkit-file-upload-button,
+    .glass-input::file-selector-button {
+        font-family: inherit;
+        font-size: 15px; 
+        font-weight: 600; 
+        padding: 8px 20px; 
+        margin-right: 16px;
+        margin-top: -6px; /* 微调与字体的垂直居中 */
+        margin-bottom: -6px;
+        border-radius: 12px;
+        color: var(--text);
+        cursor: pointer;
+        transition: var(--trans-smooth);
         
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 24px;
-        }
-        @media (min-width: 768px) {
-            .main-grid { grid-template-columns: 2fr 1fr; }
-        }
+        /* 炫彩渐变边框实现：利用 background-clip 控制色层 */
+        border: 3px solid transparent;
+        background: linear-gradient(#ffffff, #ffffff) padding-box, 
+                    linear-gradient(135deg, #ff2a85, #8a2387, #e94057, #f27121, #007aff) border-box;
         
-        .panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
-            border: 1px solid var(--glass-border);
-            border-radius: 32px;
-            padding: 32px;
-            box-shadow: var(--glass-shadow);
-        }
-        
-        .upload-area {
-            display: flex; flex-direction: column; gap: 24px;
-        }
-        
-        label { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: block; padding-left: 4px; }
-        
-        .glass-input {
-            width: 100%; padding: 18px 24px; font-size: 16px; 
-            border: 1px solid var(--glass-border); 
-            border-radius: 20px; 
-            background: rgba(255, 255, 255, 0.3); 
-            color: var(--text);
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            transition: all 0.3s ease; outline: none;
-            box-shadow: inset 0 2px 6px rgba(0,0,0,0.02);
-            appearance: none; -webkit-appearance: none;
-        }
-        .glass-input:focus {
-            background: rgba(255,255,255,0.7);
-            border-color: rgba(0,122,255,0.3);
-            box-shadow: 0 0 0 4px rgba(0,122,255,0.1), inset 0 2px 4px rgba(0,0,0,0.01);
-        }
-        
-        .btn-upload {
-            width: 100%; padding: 20px; font-size: 18px; font-weight: 600; 
-            border: 1px solid rgba(255,255,255,0.3); border-radius: 24px; 
-            background: var(--primary); color: #fff; 
-            cursor: pointer; 
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            box-shadow: 0 10px 30px rgba(0, 122, 255, 0.2);
-            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-            margin-top: auto;
-        }
-        .btn-upload:hover:not(:disabled) { transform: translateY(-2px) scale(1.02); box-shadow: 0 15px 35px rgba(0, 122, 255, 0.3); background: #007aff; }
-        .btn-upload:active:not(:disabled) { transform: translateY(1px) scale(0.98); }
-        .btn-upload:disabled { opacity: 0.6; filter: grayscale(40%); cursor: not-allowed; }
-        
-        .bar { height: 6px; background: rgba(0,0,0,0.06); border-radius: 4px; overflow: hidden; display:none; margin-top: 16px; }
-        .bar>i { display:block; height:100%; width:0%; background: var(--primary); transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 4px; }
-        .status { margin: 12px 0 0; font-size: 14px; color: var(--muted); text-align: center; }
-        .files-tip { font-size: 14px; color: var(--muted); margin-top: 10px; padding-left: 4px; }
-        
-        .results { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; }
-        .item { 
-            background: rgba(255,255,255,0.4); border: 1px solid var(--glass-border); 
-            border-radius: 24px; padding: 16px; display:flex; gap: 16px; align-items: center; 
-            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); 
-            box-shadow: 0 4px 16px rgba(0,0,0,0.02);
-        }
-        .item:hover { background: rgba(255,255,255,0.7); transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,0.06); }
-        .thumb { width: 80px; height: 80px; object-fit: cover; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .meta { flex:1; min-width: 0; }
-        .meta .name { font-size: 16px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
-        .meta .url { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 13px; color: var(--muted); word-break: break-all; }
-        
-        .copy { 
-            padding: 10px 16px; font-size: 14px; font-weight: 600; 
-            border: 1px solid rgba(0,122,255,0.2); border-radius: 16px; 
-            background: rgba(0,122,255,0.08); color: #007aff; 
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            cursor: pointer; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); flex-shrink: 0;
-        }
-        .copy:hover { background: var(--primary); color: #fff; transform: scale(1.05); box-shadow: 0 6px 16px rgba(0,122,255,0.25); border-color: transparent; }
-        
-        .keep-list-wrapper { display: flex; align-items: center; gap: 8px; margin-top: 16px; justify-content: center; }
-        .keep-list-wrapper label { margin: 0; font-size: 13px; color: var(--muted); cursor: pointer; }
-        #keepList { width: 22px; height: 22px; accent-color: #007aff; border-radius: 8px; cursor: pointer; transition: transform 0.2s; }
-        
-        p.note { color: var(--text); font-size: 18px; font-weight: 500; margin: 0; padding-left: 8px; opacity: 0.8; }
-        .muted { color: var(--muted); font-size: 14px; }
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        display: inline-block;
+        transform-origin: center;
+        transform: perspective(500px) rotateX(0deg) rotateY(0deg) scale(1) translateY(0);
+    }
+    .glass-input::-webkit-file-upload-button:hover,
+    .glass-input::file-selector-button:hover {
+        transform: perspective(500px) rotateX(6deg) rotateY(-3deg) scale(1.04) translateY(-2px);
+        box-shadow: 0 8px 24px rgba(233, 64, 87, 0.25), 0 4px 12px rgba(0, 122, 255, 0.2);
+        background: linear-gradient(#f8f9fa, #f8f9fa) padding-box, 
+                    linear-gradient(135deg, #ff2a85, #8a2387, #e94057, #f27121, #007aff) border-box;
+    }
+    
+    .btn-upload {
+        width: 100%; padding: 20px; font-size: 18px; font-weight: 600; 
+        border-radius: 24px; cursor: pointer; margin-top: auto;
+    }
+    .btn-upload:disabled { opacity: 0.6; filter: grayscale(40%); cursor: not-allowed; }
+    .btn-upload:active:not(:disabled) { transform: translateY(1px) scale(0.98); }
+    
+    .bar { height: 6px; background: rgba(0,0,0,0.06); border-radius: 4px; overflow: hidden; display:none; margin-top: 16px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+    .bar>i { display:block; height:100%; width:0%; background: var(--primary); transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 4px; }
+    .status { margin: 12px 0 0; font-size: 14px; color: var(--muted); text-align: center; }
+    .files-tip { font-size: 14px; color: var(--muted); margin-top: 10px; padding-left: 4px; }
+    
+    .results { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; animation: slideInUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.08) 0.3s backwards; }
+    .item { 
+        border-radius: 24px; padding: 16px; display:flex; gap: 16px; align-items: center; 
+    }
+    .thumb { width: 80px; height: 80px; object-fit: cover; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: var(--trans-smooth); }
+    .item:hover .thumb { transform: scale(1.05); }
+    
+    .meta { flex:1; min-width: 0; }
+    .meta .name { font-size: 16px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+    .meta .url { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 13px; color: var(--muted); word-break: break-all; }
+    
+    .copy { 
+        padding: 10px 16px; font-size: 14px; font-weight: 600; 
+        border: 1px solid rgba(0,122,255,0.2); border-radius: 16px; 
+        background: rgba(0,122,255,0.08); color: #007aff; 
+        backdrop-filter: blur(12px) saturate(150%); -webkit-backdrop-filter: blur(12px) saturate(150%);
+        cursor: pointer; transition: var(--trans-smooth); flex-shrink: 0;
+        transform: perspective(500px);
+    }
+    .copy:hover { 
+        background: rgba(0, 122, 255, 0.85); color: #fff; 
+        transform: perspective(500px) rotateX(6deg) rotateY(-3deg) scale(1.04) translateY(-2px); 
+        box-shadow: 0 8px 20px rgba(0,122,255,0.3); border-color: transparent; 
+    }
+    
+    .keep-list-wrapper { display: flex; align-items: center; gap: 8px; margin-top: 16px; justify-content: center; }
+    .keep-list-wrapper label { margin: 0; font-size: 13px; color: var(--muted); cursor: pointer; }
+    #keepList { 
+        width: 22px; height: 22px; 
+        accent-color: #007aff; 
+        border-radius: 8px; 
+        cursor: pointer; 
+        transition: var(--trans-smooth); 
+        transform: perspective(500px) rotateX(0); 
+    }
+    #keepList:hover {
+        transform: perspective(500px) rotateX(8deg) rotateY(-4deg) scale(1.1) translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2);
+    }
+    
+    p.note { color: var(--text); font-size: 18px; font-weight: 500; margin: 0; padding-left: 8px; opacity: 0.8; }
+    .muted { color: var(--muted); font-size: 14px; }
+
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div>
-                <h1>AliCDN图床</h1>
-                <p class="note">选择图片，设置分类与格式，点击上传即可获取外链。</p>
+        <div class="header glass-panel">
+            <div class="logo-wrap">
+                <img src="icon.png" alt="Logo" />
+                <div>
+                    <h1>AliCDN图床</h1>
+                    <p class="note">选择图片，设置分类与格式，点击上传即可获取外链。</p>
+                </div>
             </div>
             <div class="header-actions">
-                <button id="btnSetCookie">更换 Cookie</button>
-                <a href="gallery.html">查看画廊</a>
+                <button id="btnSetCookie" class="glass-btn">更换 Cookie</button>
+                <a href="gallery.html" class="glass-btn btn-primary">查看画廊</a>
             </div>
         </div>
 
         <div class="main-grid">
-            <div class="panel upload-area">
+            <div class="panel upload-area glass-panel">
                 <div>
                     <label for="files">图片文件（可多选）</label>
                     <input id="files" name="files[]" type="file" accept="image/*" multiple class="glass-input" />
@@ -173,7 +288,7 @@
                 </div>
                 
                 <div>
-                    <button id="btnUpload" class="btn-upload">上传</button>
+                    <button id="btnUpload" class="btn-upload glass-btn btn-primary">上传</button>
                     <div class="keep-list-wrapper">
                         <input type="checkbox" id="keepList" />
                         <label for="keepList">保留上传列表</label>
@@ -183,7 +298,7 @@
                 </div>
             </div>
 
-            <div class="panel">
+            <div class="panel glass-panel">
                 <label for="categorySelect">分类</label>
                 <select id="categorySelect" class="glass-input" style="margin-bottom: 12px;">
                     <option value="未分类">未分类</option>
@@ -308,7 +423,7 @@
             } catch (e) {
                 status.textContent = '上传失败';
                 const msg = (e && e.message) ? e.message : '未知错误';
-                results.innerHTML = `<div class="item"><div class="meta err">${escapeHtml(msg)}</div></div>`;
+                results.innerHTML = `<div class="item glass-panel"><div class="meta err">${escapeHtml(msg)}</div></div>`;
             } finally {
                 setBusy(false);
                 setTimeout(resetProgress, 500);
@@ -527,3 +642,7 @@
     </script>
 </body>
 </html>
+
+
+
+

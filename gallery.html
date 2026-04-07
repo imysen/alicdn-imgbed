@@ -4,164 +4,303 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>图片画廊 - 闲鱼图床</title>
+  <link rel="icon" href="icon.png" />
   <style>
+
     :root {
         --text: #1d1d1f;
         --muted: rgba(29, 29, 31, 0.6);
         --bg-gradient: linear-gradient(135deg, #e4ebf5 0%, #f3e5f5 100%);
         --primary: rgba(0, 122, 255, 0.85);
-        --glass-bg: rgba(255, 255, 255, 0.25);
-        --glass-border: rgba(255, 255, 255, 0.4);
-        --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+
+        /* iOS 26 Future Glassmorphism */
+        --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.15) 100%);
+        --glass-bg-hover: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.35) 100%);
+        
+        --shadow-base: 0 8px 32px rgba(0, 0, 0, 0.12), inset 0 4px 6px -2px rgba(255, 255, 255, 0.9), inset 0 -4px 6px -2px rgba(0, 0, 0, 0.05);
+        --shadow-hover: 0 15px 40px rgba(0, 0, 0, 0.2), 0 0 20px rgba(255, 255, 255, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.9), inset 0 -4px 6px -2px rgba(0, 0, 0, 0.05);
+        
+        --trans-smooth: all 0.6s cubic-bezier(0.1, 0.9, 0.2, 1);
+        --trans-bounce: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.08);
     }
+
     * { box-sizing: border-box; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
-    body {
-        margin:0; 
+    
+    body { 
+        margin: 0; 
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif; 
         background: var(--bg-gradient); 
         min-height: 100vh;
-        color: var(--text);
+        color: var(--text); 
+        line-height: 1.5; 
         background-attachment: fixed;
         padding: 40px 5%;
+        overflow-x: hidden;
     }
+
+    @keyframes slideInLeft {
+      0% { opacity: 0; transform: perspective(500px) translateX(-40px) rotateY(-15deg); }
+      100% { opacity: 1; transform: perspective(500px) translateX(0) rotateY(0deg); }
+    }
+    @keyframes slideInUp {
+      0% { opacity: 0; transform: perspective(500px) translateY(40px) rotateX(-15deg); }
+      100% { opacity: 1; transform: perspective(500px) translateY(0) rotateX(0deg); }
+    }
+
     .container { 
-        max-width: 1400px;
+        max-width: 1000px;
         margin: 0 auto;
         display: flex;
         flex-direction: column;
-        gap: 24px;
+        gap: 32px;
+        animation: slideInLeft 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.08) backwards;
     }
+
+    .glass-panel {
+        background: var(--glass-bg);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-top: 1px solid rgba(255, 255, 255, 0.8);
+        border-left: 1px solid rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(24px) saturate(150%);
+        -webkit-backdrop-filter: blur(24px) saturate(150%);
+        box-shadow: var(--shadow-base);
+        border-radius: 32px;
+        transition: var(--trans-smooth);
+        transform: perspective(500px) rotateX(0deg) rotateY(0deg) scale(1) translateY(0);
+    }
+    
+    .glass-panel:hover {
+        transform: perspective(500px) rotateX(1deg) rotateY(-1deg) scale(1.01) translateY(-1px);
+        box-shadow: var(--shadow-hover);
+        background: var(--glass-bg-hover);
+        border-top: 1px solid rgba(255, 255, 255, 1);
+        border-left: 1px solid rgba(255, 255, 255, 1);
+    }
+
     .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 24px 32px;
-        background: var(--glass-bg);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
-        border: 1px solid var(--glass-border);
+        padding: 20px 32px;
         border-radius: 28px;
-        box-shadow: var(--glass-shadow);
     }
     h1 { font-size: 32px; margin: 0; font-weight: 700; letter-spacing: -0.5px; }
-    .header a { 
+    .header-actions { display: flex; gap: 12px; }
+
+    .glass-btn {
         font-size: 15px; font-weight: 600; padding: 12px 20px; 
-        border-radius: 20px; text-decoration: none; cursor: pointer;
-        transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-        background: rgba(255,255,255,0.4); color: var(--text); 
-        backdrop-filter: blur(12px); border: 1px solid var(--glass-border);
-    }
-    .header a:hover { background: rgba(255,255,255,0.7); transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
-    .muted { color: var(--muted); font-size: 15px; margin: 0; padding-left: 4px; }
-    
-    .panel {
+        border-radius: 999px; text-decoration: none; cursor: pointer;
+        transition: var(--trans-smooth);
+        transform: perspective(500px) rotateX(0deg) rotateY(0deg) scale(1) translateY(0);
         background: var(--glass-bg);
-        backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-        border: 1px solid var(--glass-border);
-        border-radius: 28px;
-        padding: 24px;
-        box-shadow: var(--glass-shadow);
+        color: var(--text);
+        backdrop-filter: blur(24px) saturate(150%);
+        -webkit-backdrop-filter: blur(24px) saturate(150%);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-top: 1px solid rgba(255, 255, 255, 0.8);
+        border-left: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: var(--shadow-base);
+    }
+    .glass-btn:hover, .btn-primary:hover {
+        background: var(--glass-bg-hover);
+        border-top: 1px solid rgba(255, 255, 255, 1);
+        border-left: 1px solid rgba(255, 255, 255, 1);
+        transform: perspective(500px) rotateX(8deg) rotateY(-4deg) scale(1.03) translateY(-2px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, rgba(0, 122, 255, 0.7) 0%, rgba(0, 122, 255, 0.5) 100%);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-top: 1px solid rgba(255, 255, 255, 0.7);
+        border-left: 1px solid rgba(255, 255, 255, 0.5);
+    }
+    .btn-primary:hover {
+        background: linear-gradient(135deg, rgba(0, 122, 255, 0.9) 0%, rgba(0, 122, 255, 0.7) 100%);
+        color: #fff;
+    }
+
+    .main-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 24px;
+        animation: slideInUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.08) 0.2s backwards;
+    }
+    @media (min-width: 768px) {
+        .main-grid { grid-template-columns: 2fr 1fr; }
     }
     
+    .panel { padding: 32px; }
+    
+    .upload-area { display: flex; flex-direction: column; gap: 24px; }
+    
+    label { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: block; padding-left: 4px; }
+    
+    .glass-input {
+        width: 100%; padding: 18px 24px; font-size: 16px; 
+        border-radius: 20px; 
+        background: rgba(255, 255, 255, 0.3); 
+        color: var(--text);
+        backdrop-filter: blur(16px) saturate(150%);
+        -webkit-backdrop-filter: blur(16px) saturate(150%);
+        transition: var(--trans-smooth); outline: none;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-top: 1px solid rgba(255, 255, 255, 0.6);
+        border-left: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: inset 0 2px 6px -2px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(255,255,255,0.6);
+        appearance: none; -webkit-appearance: none;
+        transform: perspective(500px) rotateX(0deg) rotateY(0deg) scale(1) translateY(0);
+    }
+    .glass-input:focus {
+        background: rgba(255,255,255,0.7);
+        border-color: rgba(0,122,255,0.5);
+        border-top: 1px solid rgba(255, 255, 255, 1);
+        border-left: 1px solid rgba(255, 255, 255, 1);
+        transform: perspective(500px) rotateX(2deg) rotateY(-1deg) scale(1.01) translateY(-1px);
+        box-shadow: 0 0 0 4px rgba(0,122,255,0.15), inset 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .btn-upload {
+        width: 100%; padding: 20px; font-size: 18px; font-weight: 600; 
+        border-radius: 24px; cursor: pointer; margin-top: auto;
+    }
+    .btn-upload:disabled { opacity: 0.6; filter: grayscale(40%); cursor: not-allowed; }
+    .btn-upload:active:not(:disabled) { transform: translateY(1px) scale(0.98); }
+    
+    .bar { height: 6px; background: rgba(0,0,0,0.06); border-radius: 4px; overflow: hidden; display:none; margin-top: 16px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+    .bar>i { display:block; height:100%; width:0%; background: var(--primary); transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 4px; }
+    .status { margin: 12px 0 0; font-size: 14px; color: var(--muted); text-align: center; }
+    .files-tip { font-size: 14px; color: var(--muted); margin-top: 10px; padding-left: 4px; }
+    
+    .results { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; animation: slideInUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.08) 0.3s backwards; }
+    .item { 
+        border-radius: 24px; padding: 16px; display:flex; gap: 16px; align-items: center; 
+    }
+    .thumb { width: 80px; height: 80px; object-fit: cover; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: var(--trans-smooth); }
+    .item:hover .thumb { transform: scale(1.05); }
+    
+    .meta { flex:1; min-width: 0; }
+    .meta .name { font-size: 16px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+    .meta .url { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 13px; color: var(--muted); word-break: break-all; }
+    
+    .copy { 
+        padding: 10px 16px; font-size: 14px; font-weight: 600; 
+        border: 1px solid rgba(0,122,255,0.2); border-radius: 16px; 
+        background: rgba(0,122,255,0.08); color: #007aff; 
+        backdrop-filter: blur(12px) saturate(150%); -webkit-backdrop-filter: blur(12px) saturate(150%);
+        cursor: pointer; transition: var(--trans-smooth); flex-shrink: 0;
+        transform: perspective(500px);
+    }
+    .copy:hover { 
+        background: rgba(0, 122, 255, 0.85); color: #fff; 
+        transform: perspective(500px) rotateX(6deg) rotateY(-3deg) scale(1.04) translateY(-2px); 
+        box-shadow: 0 8px 20px rgba(0,122,255,0.3); border-color: transparent; 
+    }
+    
+    .keep-list-wrapper { display: flex; align-items: center; gap: 8px; margin-top: 16px; justify-content: center; }
+    .keep-list-wrapper label { margin: 0; font-size: 13px; color: var(--muted); cursor: pointer; }
+    #keepList { width: 22px; height: 22px; accent-color: #007aff; border-radius: 8px; cursor: pointer; transition: transform 0.2s; }
+    
+    p.note { color: var(--text); font-size: 18px; font-weight: 500; margin: 0; padding-left: 8px; opacity: 0.8; }
+    .muted { color: var(--muted); font-size: 14px; }
+
+    .container { max-width: 1400px; }
     .controls { display:flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-    .controls input[type="text"], .controls select, .controls button { 
+    .controls button { 
         padding: 14px 20px; font-size: 15px; 
-        border: 1px solid var(--glass-border); border-radius: 18px; 
-        background: rgba(255, 255, 255, 0.3); color: var(--text);
-        backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-        transition: all 0.3s ease; outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
     }
-    .controls input:focus, .controls select:focus {
-        background: rgba(255,255,255,0.7); box-shadow: 0 0 0 4px rgba(0,122,255,0.1), inset 0 2px 4px rgba(0,0,0,0.01);
+    .controls .glass-input {
+        padding: 14px 20px; font-size: 15px; 
+        border-radius: 16px;
     }
-    .controls button { font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.4); }
-    .controls button:hover { background: rgba(255,255,255,0.8); transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
-    .controls .primary { background: var(--primary); color: #fff; border: none; box-shadow: 0 8px 20px rgba(0,122,255,0.2); }
-    .controls .primary:hover { background: #007aff; box-shadow: 0 12px 25px rgba(0,122,255,0.3); }
-    
     .stats { margin: 16px 0 0; font-size: 15px; font-weight: 500; color: var(--muted); padding-left: 8px; }
     
-    .grid { margin-top: 12px; display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; }
+    .grid { margin-top: 12px; display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; animation: slideInUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.08) 0.3s backwards; }
     .item { 
-        border: 1px solid var(--glass-border); 
-        border-radius: 24px; overflow: hidden; 
-        background: rgba(255,255,255,0.3); 
+        overflow: hidden; 
         display: flex; flex-direction: column; 
-        box-shadow: 0 8px 24px rgba(0,0,0,0.02);
-        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-        transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        padding: 0;
     }
-    .item:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(0,0,0,0.08); background: rgba(255,255,255,0.6); }
-    .item img { display:block; width:100%; height:180px; object-fit: cover; background: transparent; transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .item img { display:block; width:100%; height:180px; object-fit: cover; background: transparent; transition: var(--trans-smooth); }
     .item:hover img { transform: scale(1.05); }
     .info { padding: 16px; z-index: 2; background: inherit; }
     .name { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
     .meta { font-size: 13px; color: var(--muted); display:flex; justify-content: space-between; }
-    .acts { display:flex; gap: 8px; padding: 16px; border-top: 1px solid rgba(255,255,255,0.2); flex-wrap: wrap; z-index: 2; background: inherit; }
+    .acts { display:flex; gap: 8px; padding: 16px; border-top: 1px solid rgba(255, 255, 255, 0.2); flex-wrap: wrap; z-index: 2; background: inherit; }
+    
     .acts button, .acts a { 
         flex: 1; text-align: center;
         padding: 10px 6px; font-size: 14px; font-weight: 600; 
-        background: rgba(255,255,255,0.5); color: var(--text); border: none; border-radius: 14px; 
-        cursor:pointer; text-decoration:none; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        background: rgba(255,255,255,0.2); color: var(--text); border: none; border-radius: 14px; 
+        cursor:pointer; text-decoration:none; 
+        transition: var(--trans-smooth);
+        backdrop-filter: blur(12px) saturate(150%);
+        -webkit-backdrop-filter: blur(12px) saturate(150%);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-top: 1px solid rgba(255, 255, 255, 0.6);
+        border-left: 1px solid rgba(255, 255, 255, 0.4);
+        transform: perspective(500px);
     }
-    .acts button:hover, .acts a:hover { background: rgba(0,122,255,0.1); color: #007aff; transform: scale(1.05); }
+    .acts button:hover, .acts a:hover { 
+        background: rgba(0,122,255,0.15); color: #007aff; 
+        transform: perspective(500px) rotateX(6deg) rotateY(-3deg) scale(1.04) translateY(-2px); 
+        box-shadow: 0 4px 12px rgba(0,122,255,0.2); 
+    }
     .acts .danger { color: #ff3b30; }
-    .acts .danger:hover { background: rgba(255,59,48,0.1); color: #ff3b30; }
+    .acts .danger:hover { background: rgba(255,59,48,0.15); color: #ff3b30; box-shadow: 0 4px 12px rgba(255,59,48,0.2); }
     .empty, .error, .loading { padding: 60px; text-align: center; color: var(--muted); font-size: 16px; font-weight: 500; grid-column: 1 / -1; }
     
-    .cat-row { display:flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
-    .cat-row input, .cat-row select { 
-        flex: 1; min-width: 150px;
-        padding: 14px 20px; font-size: 15px; border: 1px solid var(--glass-border); border-radius: 18px; 
-        background: rgba(255,255,255,0.3); outline: none; transition: all 0.3s ease;
-        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    .logo-wrap {
+        display: flex;
+        align-items: center;
+        gap: 16px;
     }
-    .cat-row input:focus, .cat-row select:focus { background: rgba(255,255,255,0.7); box-shadow: 0 0 0 4px rgba(0,122,255,0.1); }
-    .cat-row button { 
-        padding: 14px 24px; font-size: 15px; font-weight: 600; 
-        border: none; border-radius: 18px; background: rgba(255,255,255,0.4); cursor:pointer; transition: all 0.3s ease;
-        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--glass-border);
+    .logo-wrap img {
+        width: 48px;
+        height: 48px;
+        object-fit: contain;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    .cat-row button:hover { background: rgba(255,255,255,0.8); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
-    .cat-row .danger { color: #ff3b30; background: rgba(255,59,48,0.05); }
-    .cat-row .danger:hover { background: rgba(255,59,48,0.15); box-shadow: 0 8px 20px rgba(255,59,48,0.2); }
-    @media (max-width: 768px) {
-        body { padding: 20px 16px; }
-    }
-  </style>
+
+    </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <div>
-        <h1>图片画廊</h1>
-        <p class="muted">查看与管理已上传的图片，可按分类与名称筛选。</p>
+    <div class="header glass-panel">
+      <div class="logo-wrap">
+        <img src="icon.png" alt="Logo" />
+        <div>
+          <h1>图片画廊</h1>
+          <p class="muted">查看与管理已上传的图片，可按分类与名称筛选。</p>
+        </div>
       </div>
-      <a href="index.html">返回上传</a>
+      <a href="index.html" class="glass-btn">返回上传</a>
     </div>
 
-    <div class="panel">
-      <div class="controls">
-        <input id="kw" type="text" placeholder="搜索文件名" style="flex: 2; min-width: 200px;" />
-        <select id="selCategory" style="flex: 1; min-width: 150px;"></select>
-        <button id="btnRefresh">刷新</button>
-        <button id="btnExport">导出数据</button>
-        <button id="btnOpenJson" class="primary" title="打开原始数据">打开JSON</button>
+    <div class="panel glass-panel">
+      <div class="controls glass-btn-group">
+        <input id="kw" type="text" placeholder="搜索文件名" class="glass-input" style="flex: 2; min-width: 200px;" />
+        <select id="selCategory" class="glass-input" style="flex: 1; min-width: 150px;"></select>
+        <button class="glass-btn btn-primary" id="btnRefresh">刷新</button>
+        <button id="btnExport" class="glass-btn">导出数据</button>
+        <button id="btnOpenJson" class="glass-btn" title="打开原始数据">打开JSON</button>
       </div>
       <div class="stats" id="stats">统计：总数 0 · 分类 0</div>
     </div>
 
-    <div class="panel" id="catPanel">
-      <div class="muted" style="margin-bottom: 8px;">分类管理：可以重命名分类或删除分类（删除分类仅把该分类下图片移至“未分类”）。</div>
-      <div class="cat-row">
-        <select id="catFrom"></select>
-        <input id="catTo" type="text" placeholder="新分类名（用于重命名）" />
-        <button id="btnRenameCat">重命名</button>
-        <button id="btnDeleteCat" class="danger">删除分类</button>
+    <div class="panel glass-panel" id="catPanel">
+      <div class="muted" style="margin-bottom: 12px;">分类管理：可以重命名分类或删除分类（删除分类仅把该分类下图片移至“未分类”）。</div>
+      <div class="cat-row controls glass-btn-group">
+        <select id="catFrom" class="glass-input" style="flex: 1; min-width: 120px;"></select>
+        <input id="catTo" type="text" class="glass-input" placeholder="新分类名（用于重命名）" style="flex: 2; min-width: 150px;" />
+        <button id="btnRenameCat" class="glass-btn">重命名</button>
+        <button id="btnDeleteCat" class="glass-btn danger">删除分类</button>
       </div>
-      <div class="cat-row">
-        <input id="catNew" type="text" placeholder="新增分类名" style="flex: 3;" />
-        <button id="btnAddCat" style="flex: 1;">新增分类</button>
+      <div class="cat-row controls glass-btn-group" style="margin-top: 12px;">
+        <input id="catNew" type="text" class="glass-input" placeholder="新增分类名" style="flex: 3; min-width: 200px;" />
+        <button id="btnAddCat" class="glass-btn btn-primary" style="flex: 1; min-width: 120px;">新增分类</button>
       </div>
     </div>
 
@@ -445,3 +584,6 @@
   </script>
 </body>
 </html>
+
+
+

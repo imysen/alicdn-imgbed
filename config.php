@@ -9,8 +9,7 @@
 
 // 闲鱼API配置
 define('GOOFISH_UPLOAD_URL', 'https://stream-upload.goofish.com/api/upload.api');
-define('COOKIE2_VALUE', '1b35885f071a40aeeb5295422a2a0e6a');
-// 请替换为你的cookie2值 通过https://author.goofish.com/#/获取
+define('COOKIE2_VALUE', '');
 
 // 上传限制配置
 define('MAX_FILE_SIZE', 50 * 1024 * 1024); // 最大文件大小 50MB
